@@ -17,9 +17,22 @@ A service is basically a worker verticle and you can configure it using the foll
 
 # Usage
 Booster which is the initializing class of this utility requires this JsonObject in the constructor in order to initialize. 
-### Adding Dependency  [![](https://jitpack.io/v/Areeb-Gillani/vertx-boost.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost)
+### Add it in your root build.gradle at the end of repositories
 ```kotlin
-implementation ("com.github.Areeb-Gillani:vertx-boost:e7d2c80093")
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+### Adding Dependency 
+
+```kotlin
+dependencies {
+	...
+  implementation ("com.github.Areeb-Gillani:vertx-boost:e7d2c80093")
+}
 ```
 ### Code
 ```java
@@ -28,3 +41,4 @@ new Booster(vertx, router, jsonObject).boost("[base package to scan for all the 
 ### Note
 @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
 
+[![](https://jitpack.io/v/Areeb-Gillani/vertx-boost.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost)
