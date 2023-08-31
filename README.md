@@ -19,3 +19,5 @@ Booster which is the initializing class of this utility requires this JsonObject
 # Code
 new Booster(vertx, router, jsonObject).boost("[base package to scan for all the above mentioned annotations]");
 
+# Note
+@Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
