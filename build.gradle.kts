@@ -15,15 +15,9 @@ publishing {
         }
     }
 }
-tasks.publishToMavenLocal{
-    dependsOn (tasks.build)
-    onlyIf{
-        true
-    }
-}
+
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 dependencies {
