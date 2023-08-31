@@ -7,17 +7,24 @@ In Vertx a router needs to be decalared in order to register API endpoints in th
 Vertx says that every class which extends abstractverticle will be handled by their own dedicated threads and threadpools and will have its own life cycle. I am asuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea then please visit https://vertx.io first.
 A service is basically a worker verticle and you can configure it using the following json. 
 # Config
+```json
 {
-"workerPoolName": "testWorker",
-"workerPoolSize": 10,
-"workerInstance": 2
+  "workerPoolName": "testWorker",
+  "workerPoolSize": 10,
+  "workerInstance": 2
 }
+```
 
 # Usage
-
 Booster which is the initializing class of this utility requires this JsonObject in the constructor in order to initialize. 
-# Code
+### Adding Dependency  [![](https://jitpack.io/v/Areeb-Gillani/vertx-boost.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost)
+```kotlin
+implementation ("com.github.Areeb-Gillani:vertx-boost:e7d2c80093")
+```
+### Code
+```java
 new Booster(vertx, router, jsonObject).boost("[base package to scan for all the above mentioned annotations]");
-
-# Note
+```
+### Note
 @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
+
