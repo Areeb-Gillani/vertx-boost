@@ -1,9 +1,7 @@
 plugins {
     id("java")
     id("maven-publish")
-}
-tasks.withType<KotlinCompile> { 
-  compilerOptions.jvmTarget.set(JvmTarget.JVM_17) 
+    kotlin("jvm") version "1.7.0"
 }
 
 group = "io.github.areebgillani"
