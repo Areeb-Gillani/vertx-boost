@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("maven-publish")
 }
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 group = "io.github.areebgillani"
 version = "0.0.1"

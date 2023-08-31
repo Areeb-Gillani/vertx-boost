@@ -47,3 +47,10 @@ gradlew.bat
 .idea/jarRepositories.xml
 .idea/misc.xml
 .idea/vcs.xml
+.gradle/7.5.1/checksums/sha256-checksums.bin
+.gradle/7.5.1/checksums/sha512-checksums.bin
+.gradle/7.5.1/fileHashes/resourceHashesCache.bin
+build/publications/mavenJava/module.json
+build/publications/mavenJava/pom-default.xml
+build/tmp/compileJava/previous-compilation-data.bin
+build/tmp/jar/MANIFEST.MF
