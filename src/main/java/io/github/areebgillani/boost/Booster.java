@@ -98,8 +98,8 @@ public class Booster {
             controllerInstanceMap.put(controller.getName(), controllerInstance);
             for (Method method : controller.getMethods()) {
                 for (Annotation annotation : method.getAnnotations()) {
-                    if (annotation instanceof PostMapping map) {
-                        router.route(HttpMethod.POST, map.value())
+                    if (annotation instanceof PostMapping) {
+                        router.route(HttpMethod.POST, ((PostMapping)annotation).value())
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
@@ -109,7 +109,7 @@ public class Booster {
                                     }
                                 });
                     } else if (annotation instanceof GetMapping map) {
-                        router.route(HttpMethod.GET, map.value())
+                        router.route(HttpMethod.GET, ((GetMapping)annotation).value())
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {

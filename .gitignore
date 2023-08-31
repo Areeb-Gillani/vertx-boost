@@ -55,3 +55,12 @@ build/publications/mavenJava/pom-default.xml
 build/tmp/compileJava/previous-compilation-data.bin
 build/tmp/jar/MANIFEST.MF
 .idea/kotlinc.xml
+.gradle/8.3/gc.properties
+.gradle/8.3/checksums/checksums.lock
+.gradle/8.3/checksums/md5-checksums.bin
+.gradle/8.3/checksums/sha1-checksums.bin
+.gradle/8.3/dependencies-accessors/dependencies-accessors.lock
+.gradle/8.3/dependencies-accessors/gc.properties
+.gradle/8.3/executionHistory/executionHistory.lock
+.gradle/8.3/fileChanges/last-build.bin
+.gradle/8.3/fileHashes/fileHashes.lock
