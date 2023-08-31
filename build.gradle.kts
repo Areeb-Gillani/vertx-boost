@@ -1,7 +1,6 @@
 plugins {
     id("java")
     id("maven-publish")
-    kotlin("jvm") version "1.7.0"
 }
 
 group = "io.github.areebgillani"
