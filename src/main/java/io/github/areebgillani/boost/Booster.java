@@ -108,7 +108,7 @@ public class Booster {
                                         throw new RuntimeException(e);
                                     }
                                 });
-                    } else if (annotation instanceof GetMapping map) {
+                    } else if (annotation instanceof GetMapping) {
                         router.route(HttpMethod.GET, ((GetMapping)annotation).value())
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
