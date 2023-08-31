@@ -33,9 +33,9 @@ public class Booster {
     Vertx vertx;
     JsonObject config;
 
-    public Booster(Router router, Vertx vertx, JsonObject config) {
-        this.router = router;
+    public Booster(Vertx vertx, Router router, JsonObject config) {
         this.vertx = vertx;
+        this.router = router;
         this.config = config;
     }
 
@@ -91,6 +91,7 @@ public class Booster {
         }
         return params;
     }
+
     private void deployControllers() throws Exception {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> controllers = reflections.getTypesAnnotatedWith(RestController.class);
@@ -130,6 +131,7 @@ public class Booster {
                     .setConfig(config));
         }
     }
+
     private void deployServices() throws Exception {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
@@ -156,6 +158,7 @@ public class Booster {
                     config.getInteger("workerInstance"), null);
         }
     }
+
     private void deployWorkers(Vertx vertx, JsonObject config, Supplier<Verticle> repoSupplier, String poolName, int poolSize, int instances, String deploymentId) throws Exception {
         vertx.deployVerticle(repoSupplier, new DeploymentOptions()
                 .setConfig(config)
