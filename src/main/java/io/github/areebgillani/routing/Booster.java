@@ -1,6 +1,6 @@
-package com.areebgillani.routing;
+package io.github.areebgillani.routing;
 
-import com.areebgillani.aspects.*;
+import io.github.areebgillani.aspects.*;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -103,7 +103,7 @@ public class Booster {
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
-                                        ResponseHandler.success(context, method.invoke(cn, postParams(method, context)), method.getReturnType());
+                                        io.github.areebgillani.routing.ResponseHandler.success(context, method.invoke(cn, postParams(method, context)), method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -113,7 +113,7 @@ public class Booster {
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
-                                        ResponseHandler.success(context, method.invoke(cn, getParams(method, context)), method.getReturnType());
+                                        io.github.areebgillani.routing.ResponseHandler.success(context, method.invoke(cn, getParams(method, context)), method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }

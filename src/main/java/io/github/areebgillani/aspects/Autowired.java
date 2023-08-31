@@ -1,4 +1,4 @@
-package com.areebgillani.aspects;
+package io.github.areebgillani.aspects;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
