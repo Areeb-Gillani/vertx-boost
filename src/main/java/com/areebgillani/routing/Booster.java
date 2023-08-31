@@ -152,7 +152,7 @@ public class Booster {
             };
             deployWorkers(vertx, config, myService,
                     config.getString("workerPoolName"),
-                    config.getInteger("workerThreadPool"),
+                    config.getInteger("workerPoolSize"),
                     config.getInteger("workerInstance"), null);
         }
     }
