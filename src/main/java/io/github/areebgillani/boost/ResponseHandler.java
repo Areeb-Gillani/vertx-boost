@@ -1,4 +1,4 @@
-package io.github.areebgillani.routing;
+package io.github.areebgillani.boost;
 
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
