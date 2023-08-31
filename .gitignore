@@ -54,3 +54,4 @@ build/publications/mavenJava/module.json
 build/publications/mavenJava/pom-default.xml
 build/tmp/compileJava/previous-compilation-data.bin
 build/tmp/jar/MANIFEST.MF
+.idea/kotlinc.xml
