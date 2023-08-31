@@ -2,7 +2,9 @@ plugins {
     id("java")
     id("maven-publish")
 }
-java.sourceCompatibility = JavaVersion.VERSION_17
+tasks.withType<KotlinCompile> { 
+  compilerOptions.jvmTarget.set(JvmTarget.JVM_17) 
+}
 
 group = "io.github.areebgillani"
 version = "0.0.1"
