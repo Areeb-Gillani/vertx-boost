@@ -21,8 +21,7 @@ Booster which is the initializing class of this utility requires this JsonObject
 ```kotlin
 allprojects {
 		repositories {
-			...
-			maven { url 'https://jitpack.io' }
+			maven ("https://jitpack.io")
 		}
 	}
 ```
@@ -30,7 +29,6 @@ allprojects {
 
 ```kotlin
 dependencies {
-	...
   implementation ("com.github.Areeb-Gillani:vertx-boost:e7d2c80093")
 }
 ```
