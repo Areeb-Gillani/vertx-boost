@@ -3,7 +3,7 @@ This project adds the flavor of SpringBoot's style annotations in vertx to reduc
 
 # Background & Basics
 
-In Vertx a router needs to be decalared in order to register API endpoints in the application. Each router has its own handler which entertains the logic once API endpoint is called. It becomes very hard to maintain so many router handlers and like most people tend to declare all the routes in the same class then it's a very hard class to maintain.
+In Vertx a router needs to be decalared in order to register API endpoints in the application. Each route has its own handler which entertains the logic once API endpoint is called. It becomes very hard to maintain so many route handlers and like most people tend to declare all the routes in the same class then it's a very hard class to maintain.
 Vertx says that every class which extends abstractverticle will be handled by their own dedicated threads and threadpools and will have its own life cycle. I am asuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea then please visit https://vertx.io first.
 A service is basically a worker verticle and you can configure it using the following json. 
 # Config
