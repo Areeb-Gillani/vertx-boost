@@ -32,7 +32,7 @@ allprojects {
 
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:e7d2c80093")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.1")
 }
 ```
 ### Code
