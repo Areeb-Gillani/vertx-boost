@@ -64,7 +64,7 @@ public class TestController extends AbstractVerticle{
         return "Hi! " +body.getString("username");
     }
     @PostMapping("/replyHiToUser")
-    public String replyHiToUser(JsonObject body, RoutingContext context){
+    public void replyHiToUser(JsonObject body, RoutingContext context){
         return vertx.eventBus().request("MyTopic", body, reply->{
             if(reply.succeeded()){
                 context.json(reply.result().body());
