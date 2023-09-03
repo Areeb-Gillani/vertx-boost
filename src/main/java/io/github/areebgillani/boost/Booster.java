@@ -150,6 +150,7 @@ public class Booster {
                                         for (Annotation instanceVarAnnotation : instanceVar.getAnnotations()) {
                                             if (instanceVarAnnotation instanceof Repository map) {
                                                 value = map.value();
+                                                break;
                                             }
                                         }
                                         field.set(serviceInstance, instanceVar.getConstructor(String.class).newInstance(value));
