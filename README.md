@@ -1,5 +1,6 @@
+[![](https://jitpack.io/v/Areeb-Gillani/vertx-boost.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost)
 # vertx-boost
-This project adds the flavor of SpringBoot's style annotations in vertx to reduce the learning curve. It follows the same annotation style such as @RestController, @Service, @Autowired, @RequestParam, @RequestBody, @PostMapping &amp; @GetMapping whereas controller and service classes should extend AbstractVerticle as per the requirement of Vertx.
+This project adds the flavor of SpringBoot's style annotations in vertx to reduce the learning curve. It follows the same annotation style such as @RestController, @Service, @Autowired, @RequestParam, @RequestBody, @PostMapping &amp; @GetMapping whereas controller and service classes should extend AbstractVerticle as per the implementation of Vertx.
 
 # Background & Basics
 ### Vertx Vs Spring
@@ -41,5 +42,3 @@ new Booster(vertx, router, configJson).boost("[base package to scan for all the 
 ```
 ### Note
 @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
-
-[![](https://jitpack.io/v/Areeb-Gillani/vertx-boost.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost)
