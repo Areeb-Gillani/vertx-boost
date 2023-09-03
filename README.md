@@ -23,7 +23,7 @@ allprojects {
 
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.1")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.2")
 }
 ```
 Vertx says that every class which extends AbstractVerticle will be handled by their own dedicated threads and threadPools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea then please visit https://vertx.io first. A service is basically a worker verticle, you can configure it using the following json. 
