@@ -41,7 +41,16 @@ Vertx says that every class which extends AbstractVerticle will be handled by th
 
 # Usage
 Booster which is the initializing class of this utility requires this JsonObject in the constructor in order to initialize. 
-
+### Initializer
+Please initialize the booster class in your main application class to register everything on startup.
+```java
+public class Application {
+    public void initVertxBoost(){
+        Booster booster = new Booster(vertx, router, config);
+        booster.boost(this.getClass().getPackage().getName());
+    }
+}
+```
 ### Controller
 ```java
 @RestController
@@ -64,6 +73,11 @@ public class TestController extends AbstractVerticle{
     }
 }
 ```
+#### Note
+- We can't call service function directly to keep our controller lightweight so if you want some blocking call use event bus to pass that to worker thread.
+- Return in this case will be handled by vertx that is why controller's return type is void. We are writing the response directly to out routing context
+- @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
+
 ### Service
 ```java
 @Service("TestWorker")
@@ -80,13 +94,15 @@ public class TestService extends AbstractVerticle{
     }
 }
 ```
+#### Note
+- Service will never return anything directly instead it will use reply method to return the response.
+- Bind all the methods to the topics in start method.
+
 ### Repository
 ```java
 public class DatabaseRepo {
     //Write your db operations here 
 }
 ```
-### Note
-- We can't call service function directly to keep our controller lightweight so if you want some blocking call use event bus to pass that to worker thread.
-- Return in this case will be handled by vertx that is why controller's return type is void. We are writing the response directly to out routing context
-- @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
+#### Announcement
+- JPA style repository system will be out soon.
