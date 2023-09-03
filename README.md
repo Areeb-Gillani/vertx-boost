@@ -30,12 +30,12 @@ Vertx says that every class that extends AbstractVerticle will be handled by its
 # Config
 ```json
 {
-  "workers": {
-    "ExampleWorker": {
-      "instance": 5,
-      "poolSize": 6
-    }
-  }
+   "workers":{
+      "ExampleWorker":{
+         "instance":5,
+         "poolSize":6
+      }
+   }
 }
 ```
  
