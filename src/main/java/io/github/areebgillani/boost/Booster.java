@@ -133,6 +133,8 @@ public class Booster {
     private void deployServices() throws Exception {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
+        Set<Class<?>> repos = reflections.getTypesAnnotatedWith(Repository.class);
+        ;
         JsonObject workers = config.getJsonObject("workers");
         for (Class<?> service : services) {
             Supplier<Verticle> myService = () -> {
@@ -141,7 +143,20 @@ public class Booster {
                     for (Field field : service.getDeclaredFields()) {
                         for (Annotation annotation : field.getAnnotations()) {
                             if (annotation instanceof Autowired) {
-                                field.set(serviceInstance, Class.forName(field.getType().getName()).getConstructor().newInstance());
+                                Class<?> instanceVar = Class.forName(field.getType().getName());
+                                if (!repos.isEmpty()) {
+                                    if (repos.contains(instanceVar)) {
+                                        String value = "Primary";
+                                        for (Annotation instanceVarAnnotation : instanceVar.getAnnotations()) {
+                                            if (instanceVarAnnotation instanceof Repository map) {
+                                                value = map.value();
+                                            }
+                                        }
+                                        field.set(serviceInstance, instanceVar.getConstructor(String.class).newInstance(value));
+                                    }
+                                } else {
+                                    field.set(serviceInstance, instanceVar.getConstructor().newInstance());
+                                }
                             }
                         }
                     }
@@ -158,7 +173,7 @@ public class Booster {
 
     private String getWorkerName(Class<?> service) {
         for (Annotation annotation : service.getAnnotations()) {
-            if(annotation instanceof Service serv)
+            if (annotation instanceof Service serv)
                 return serv.value();
         }
         return "default";
@@ -173,7 +188,7 @@ public class Booster {
                 .setWorker(true), res -> {
             if (res.succeeded())
                 logger.info("Worker Deployed Successfully");
-             else
+            else
                 logger.error("Deployment Failed " + res.cause());
         });
     }
