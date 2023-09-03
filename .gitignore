@@ -64,3 +64,6 @@ build/tmp/jar/MANIFEST.MF
 .gradle/8.3/executionHistory/executionHistory.lock
 .gradle/8.3/fileChanges/last-build.bin
 .gradle/8.3/fileHashes/fileHashes.lock
+.gradle/8.3/executionHistory/executionHistory.bin
+.gradle/8.3/fileHashes/fileHashes.bin
+.gradle/8.3/fileHashes/resourceHashesCache.bin

@@ -98,8 +98,8 @@ public class Booster {
             controllerInstanceMap.put(controller.getName(), controllerInstance);
             for (Method method : controller.getMethods()) {
                 for (Annotation annotation : method.getAnnotations()) {
-                    if (annotation instanceof PostMapping) {
-                        router.route(HttpMethod.POST, ((PostMapping)annotation).value())
+                    if (annotation instanceof PostMapping map) {
+                        router.route(HttpMethod.POST, map.value())
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
@@ -108,8 +108,8 @@ public class Booster {
                                         throw new RuntimeException(e);
                                     }
                                 });
-                    } else if (annotation instanceof GetMapping) {
-                        router.route(HttpMethod.GET, ((GetMapping)annotation).value())
+                    } else if (annotation instanceof GetMapping map) {
+                        router.route(HttpMethod.GET, map.value())
                                 .handler(context -> {
                                     Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
@@ -133,6 +133,7 @@ public class Booster {
     private void deployServices() throws Exception {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
+        JsonObject workers = config.getJsonObject("workers");
         for (Class<?> service : services) {
             Supplier<Verticle> myService = () -> {
                 try {
@@ -150,25 +151,29 @@ public class Booster {
                     throw new RuntimeException(e);
                 }
             };
-            deployWorkers(vertx, config, myService,
-                    config.getString("workerPoolName"),
-                    config.getInteger("workerPoolSize"),
-                    config.getInteger("workerInstance"), null);
+            String workerName = getWorkerName(service);
+            deployWorkers(config, myService, workerName, workers.getJsonObject(workerName));
         }
     }
 
-    private void deployWorkers(Vertx vertx, JsonObject config, Supplier<Verticle> repoSupplier, String poolName, int poolSize, int instances, String deploymentId) throws Exception {
-        vertx.deployVerticle(repoSupplier, new DeploymentOptions()
+    private String getWorkerName(Class<?> service) {
+        for (Annotation annotation : service.getAnnotations()) {
+            if(annotation instanceof Service serv)
+                return serv.value();
+        }
+        return "default";
+    }
+
+    private void deployWorkers(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) throws Exception {
+        vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
                 .setConfig(config)
-                .setWorkerPoolName(poolName)
-                .setWorkerPoolSize(poolSize)
-                .setInstances(instances)
+                .setWorkerPoolName(workerName)
+                .setWorkerPoolSize(workerConfig.getInteger("poolSize", 20))
+                .setInstances(workerConfig.getInteger("instance", 5))
                 .setWorker(true), res -> {
-            if (res.succeeded()) {
+            if (res.succeeded())
                 logger.info("Worker Deployed Successfully");
-                if (deploymentId != null)
-                    vertx.undeploy(deploymentId).onComplete(ar -> logger.info("Old Worker Removed"));
-            } else
+             else
                 logger.error("Deployment Failed " + res.cause());
         });
     }
