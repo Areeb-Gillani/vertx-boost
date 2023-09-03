@@ -59,9 +59,9 @@ public class TestController extends AbstractVerticle{
     public String sayHi(){
         return "hi";
     }
-    @GetMapping("/sayOk")
-    public String sayOk(@RequestParam("username") String user){
-        return "hi "+user;
+    @GetMapping("/sayHello")
+    public String sayHello(@RequestParam("username") String user){
+        return "Hello "+user;
     }
     @PostMapping("/sayHiToUser")
     public String sayHiToUser(JsonObject body){
