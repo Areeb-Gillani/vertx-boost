@@ -114,9 +114,9 @@ If you want to use a dynamic, easy-to-use database library, then please check ou
 ```java
 @Repository("MyDbConfig")
 public class DatabaseRepo extends CrudRepository<ExampleModel>{
-public DatabaseRepo (String connectionName){
-super(connectionName);
-}
+   public DatabaseRepo (String connectionName){
+      super(connectionName);
+   }
     //Write other db operations here your CRUD operations are already covered above 
 }
 ```
