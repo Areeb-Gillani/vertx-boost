@@ -108,5 +108,16 @@ public class DatabaseRepo {
     //Write your db operations here 
 }
 ```
-#### Announcement
-- JPA style repository system will be out soon.
+# vertx-boost-db  [![](https://jitpack.io/v/Areeb-Gillani/vertx-boost-db.svg)](https://jitpack.io/#Areeb-Gillani/vertx-boost-db)
+If you want to use a dynamic easy to use database library then please check out vertx-boost-db. It will give you all the tools you need for databases including CrudRepository just like Spring.
+### CrudRepository
+```java
+@Repository("MyDbConfig")
+public class DatabaseRepo extends CrudRepository<ExampleModel>{
+	public DatabaseRepo (String connectionName){
+		super(connectionName);
+	}
+    //Write other db operations here your CRUD operations are already covered above 
+}
+```
+"MyDbConfig" will help you manage multi-tenancy on database level. Read more on (https://github.com/Areeb-Gillani/vertx-boost-db/blob/main/README.md)
