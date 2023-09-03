@@ -31,7 +31,7 @@ Vertx says that every class which extends AbstractVerticle will be handled by th
 ```json
 {
   "workers": {
-    "testWorker": {
+    "ExampleWorker": {
       "instance": 5,
       "poolSize": 6
     }
@@ -54,7 +54,7 @@ public class Application {
 ### Controller
 ```java
 @RestController
-public class TestController extends AbstractVerticle{
+public class ExampleController extends AbstractVerticle{
     @GetMapping("/sayHi")
     public String sayHi(){
         return "hi";
@@ -84,8 +84,8 @@ public class TestController extends AbstractVerticle{
 
 ### Service
 ```java
-@Service("TestWorker")
-public class TestService extends AbstractVerticle{
+@Service("ExampleWorker") //It is the same name which is described in configuration
+public class ExampleService extends AbstractVerticle{
     @Autowired
     DatabaseRepo myRepo;
     @Override
