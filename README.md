@@ -9,19 +9,9 @@ Vertx is an event driven toolkit backed by eclipse foundation. It's a polyglot a
 ### Basics of Vertx
 In Vertx a router needs to be decalared in order to register API endpoints in the application. Each route has its own handler which entertains the logic once API endpoint is called. It becomes very hard to maintain so many route handlers and like most people tend to declare all the routes in the same class then it's a very hard class to maintain.
 
-Vertx says that every class which extends abstractverticle will be handled by their own dedicated threads and threadpools and will have its own life cycle. I am asuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea then please visit https://vertx.io first. A service is basically a worker verticle and you can configure it using the following json. 
-# Config
-```json
-{
-  "workerPoolName": "testWorker",
-  "workerPoolSize": 10,
-  "workerInstance": 2
-}
-```
-
-# Usage
-Booster which is the initializing class of this utility requires this JsonObject in the constructor in order to initialize. 
-### Add it in your root build.gradle at the end of repositories
+# Dependency
+ Add it in your root build.gradle at the end of repositories
+### Repository
 ```kotlin
 allprojects {
 		repositories {
@@ -29,16 +19,74 @@ allprojects {
 		}
 	}
 ```
-### Adding Dependency 
+### Adding Dependency
 
 ```kotlin
 dependencies {
   implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.1")
 }
 ```
-### Code
+Vertx says that every class which extends AbstractVerticle will be handled by their own dedicated threads and threadPools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea then please visit https://vertx.io first. A service is basically a worker verticle, you can configure it using the following json. 
+# Config
+```json
+{
+  "workers": {
+    "testWorker": {
+      "instance": 5,
+      "poolSize": 6
+    }
+  }
+}
+```
+
+# Usage
+Booster which is the initializing class of this utility requires this JsonObject in the constructor in order to initialize. 
+
+### Controller
 ```java
-new Booster(vertx, router, configJson).boost("[base package to scan for all the above mentioned annotations]");
+@RestController
+public class TestController extends AbstractVerticle{
+    @GetMapping("/sayHi")
+    public String sayHi(){
+        return "hi";
+    }
+    @PostMapping("/sayHiToUser")
+    public String sayHiToUser(JsonObject body){
+        return "Hi! " +body.getString("username");
+    }
+    @PostMapping("/replyHiToUser")
+    public String replyHiToUser(JsonObject body, RoutingContext context){
+        return vertx.eventBus().request("MyTopic", body, reply->{
+            if(reply.succeeded()){
+                context.json(reply.result().body());
+            }
+        });
+    }
+}
+```
+### Service
+```java
+@Service("TestWorker")
+public class TestService extends AbstractVerticle{
+    @Autowired
+    DatabaseRepo myRepo;
+    @Override
+    public void start(){
+        vertx.eventBus().consumer("MyTopic", this::replyHiToUser);
+    }
+    private void replyHiToUser(Message<Object> message){
+        JsonObject vertxJsonObject = (JsonObject) message; 
+        message.reply("Hi "+ vertxJsonObject.getString("username"));
+    }
+}
+```
+### Repository
+```java
+public class DatabaseRepo {
+    //Write your db operations here 
+}
 ```
 ### Note
-@Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
+- We can't call service function directly to keep our controller lightweight so if you want some blocking call use event bus to pass that to worker thread.
+- Return in this case will be handled by vertx that is why controller's return type is void. We are writing the response directly to out routing context
+- @Autowired will not work in controller classes because all the controllers runs on eventloops and one can't block the eventloop's thread. Vertx will throw exception if eventloop thread is blocked. That is why composition is prohibited.
