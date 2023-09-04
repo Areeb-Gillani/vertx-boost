@@ -16,6 +16,7 @@ import org.reflections.Reflections;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
@@ -142,23 +143,7 @@ public class Booster {
                     Object serviceInstance = service.getConstructor().newInstance();
                     for (Field field : service.getDeclaredFields()) {
                         for (Annotation annotation : field.getAnnotations()) {
-                            if (annotation instanceof Autowired) {
-                                Class<?> instanceVar = Class.forName(field.getType().getName());
-                                if (!repos.isEmpty()) {
-                                    if (repos.contains(instanceVar)) {
-                                        String value = "Primary";
-                                        for (Annotation instanceVarAnnotation : instanceVar.getAnnotations()) {
-                                            if (instanceVarAnnotation instanceof Repository map) {
-                                                value = map.value();
-                                                break;
-                                            }
-                                        }
-                                        field.set(serviceInstance, instanceVar.getConstructor(String.class, JsonObject.class).newInstance(value, config));
-                                    }
-                                } else {
-                                    field.set(serviceInstance, instanceVar.getConstructor().newInstance());
-                                }
-                            }
+                            initClassVariables(repos, serviceInstance, field, annotation);
                         }
                     }
                     return (Verticle) serviceInstance;
@@ -169,6 +154,32 @@ public class Booster {
             };
             String workerName = getWorkerName(service);
             deployWorkers(config, myService, workerName, workers.getJsonObject(workerName));
+        }
+    }
+
+    private void initClassVariables(Set<Class<?>> repos, Object serviceInstance, Field field, Annotation annotation) throws ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+        if (annotation instanceof Autowired) {
+            field.setAccessible(true);
+            Class<?> instanceVar = Class.forName(field.getType().getName());
+            if (!repos.isEmpty()) {
+                initRepositoryVariable(repos, serviceInstance, field, instanceVar);
+            } else {
+                field.set(serviceInstance, instanceVar.getConstructor().newInstance());
+            }
+            field.setAccessible(false);
+        }
+    }
+
+    private void initRepositoryVariable(Set<Class<?>> repos, Object serviceInstance, Field field, Class<?> instanceVar) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+        if (repos.contains(instanceVar)) {
+            String value = "Primary";
+            for (Annotation instanceVarAnnotation : instanceVar.getAnnotations()) {
+                if (instanceVarAnnotation instanceof Repository map) {
+                    value = map.value();
+                    break;
+                }
+            }
+            field.set(serviceInstance, instanceVar.getConstructor(String.class, JsonObject.class).newInstance(value, config));
         }
     }
 
