@@ -69,7 +69,7 @@ public class ExampleController extends AbstractVerticle{
     }
     @PostMapping("/replyHiToUser")
     public void replyHiToUser(JsonObject body, RoutingContext context){
-        return vertx.eventBus().request("MyTopic", body, reply->{
+         vertx.eventBus().request("MyTopic", body, reply->{
             if(reply.succeeded()){
                 context.json(reply.result().body());
             }
