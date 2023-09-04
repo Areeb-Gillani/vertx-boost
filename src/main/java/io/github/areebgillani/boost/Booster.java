@@ -12,6 +12,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.reflections.Reflections;
 
 import java.lang.annotation.Annotation;
@@ -94,6 +95,7 @@ public class Booster {
     private void deployControllers() throws Exception {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> controllers = reflections.getTypesAnnotatedWith(RestController.class);
+        router.route().handler(BodyHandler.create());
         for (Class<?> controller : controllers) {
             Object controllerInstance = controller.getConstructor().newInstance();
             controllerInstanceMap.put(controller.getName(), controllerInstance);
@@ -135,7 +137,6 @@ public class Booster {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
         Set<Class<?>> repos = reflections.getTypesAnnotatedWith(Repository.class);
-        ;
         JsonObject workers = config.getJsonObject("workers");
         for (Class<?> service : services) {
             Supplier<Verticle> myService = () -> {
