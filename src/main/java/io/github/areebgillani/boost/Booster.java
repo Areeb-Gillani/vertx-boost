@@ -153,7 +153,7 @@ public class Booster {
                                                 break;
                                             }
                                         }
-                                        field.set(serviceInstance, instanceVar.getConstructor(String.class).newInstance(value));
+                                        field.set(serviceInstance, instanceVar.getConstructor(String.class, JsonObject.class).newInstance(value, config));
                                     }
                                 } else {
                                     field.set(serviceInstance, instanceVar.getConstructor().newInstance());
