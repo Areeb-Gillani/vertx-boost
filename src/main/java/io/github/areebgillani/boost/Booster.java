@@ -63,9 +63,7 @@ public class Booster {
     private Object[] getParams(Method m, RoutingContext context) {
         Object[] params = new Object[m.getParameterCount()];
         Parameter[] declaredParams = m.getParameters();
-        Annotation[][] declaredParamAnnotations = methodBluePrint
-                .computeIfAbsent(m.getName() + m.getClass().getName(),
-                        k -> m.getParameterAnnotations());
+        Annotation[][] declaredParamAnnotations = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> m.getParameterAnnotations());
         for (int i = 0; i < params.length; i++) {
             Class<?> type = declaredParams[i].getType();
             String value = context.request().getParam(((RequestParam) declaredParamAnnotations[i][0]).value());
@@ -104,9 +102,10 @@ public class Booster {
                     if (annotation instanceof PostMapping map) {
                         router.route(HttpMethod.POST, map.value())
                                 .handler(context -> {
-                                    Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
-                                        io.github.areebgillani.boost.ResponseHandler.success(context, method.invoke(cn, postParams(method, context)), method.getReturnType());
+                                        ResponseHandler.success(context,
+                                                        method.invoke(controllerInstanceMap.get(controller.getName()), postParams(method, context)),
+                                                        method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -114,9 +113,10 @@ public class Booster {
                     } else if (annotation instanceof GetMapping map) {
                         router.route(HttpMethod.GET, map.value())
                                 .handler(context -> {
-                                    Object cn = controllerInstanceMap.get(controller.getName());
                                     try {
-                                        io.github.areebgillani.boost.ResponseHandler.success(context, method.invoke(cn, getParams(method, context)), method.getReturnType());
+                                        ResponseHandler.success(context,
+                                                        method.invoke(controllerInstanceMap.get(controller.getName()), getParams(method, context)),
+                                                        method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -167,7 +167,6 @@ public class Booster {
             } else {
                 field.set(serviceInstance, instanceVar.getConstructor().newInstance());
             }
-            field.setAccessible(false);
         }
     }
 
@@ -189,7 +188,7 @@ public class Booster {
             if (annotation instanceof Service serv)
                 return serv.value();
         }
-        return "default";
+        return "default-"+service.getName();
     }
 
     private void deployWorkers(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) throws Exception {
