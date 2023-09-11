@@ -10,24 +10,46 @@ Vertx is an event-driven toolkit backed by the Eclipse Foundation. It's a polygl
 In Vertx, a router needs to be declared in order to register API endpoints in the application. Each route has its own handler, which entertains the logic once the API endpoint is called. It becomes very hard to maintain so many route handlers, and since most people tend to declare all the routes in the same class, it's a very hard class to maintain.
  
 # Dependency
- Add it in your root build.gradle at the end of repositories
 ### Repository
+#### build.gradle
 ```kotlin
 allprojects {
-repositories {
-maven ("https://jitpack.io")
-}
-}
+        repositories {
+            maven ("https://jitpack.io")
+        }
+    }
 ```
-### Adding Dependency
- 
+#### pom.xml
+```xml
+<repositories>
+  ...
+  <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+```
+### Dependency
+#### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.2")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.6")
 }
 ```
+#### pom.xml
+```xml
+<dependencies>
+  ...
+	<dependency>
+	    <groupId>com.github.Areeb-Gillani</groupId>
+	    <artifactId>vertx-boost</artifactId>
+	    <version>0.0.6</version>
+	</dependency>
+</dependencies>
+```
+# Configuration
 Vertx says that every class that extends AbstractVerticle will be handled by its own dedicated threads and thread pools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea, then please visit https://vertx.io first. A service is basically a worker verticle; you can configure it using the following JSON:
-# Config
+### Config JSON
 ```json
 {
    "workers":{
