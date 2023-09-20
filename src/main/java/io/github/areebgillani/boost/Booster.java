@@ -66,25 +66,27 @@ public class Booster {
         Annotation[][] declaredParamAnnotations = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> m.getParameterAnnotations());
         for (int i = 0; i < params.length; i++) {
             Class<?> type = declaredParams[i].getType();
-            String value = context.request().getParam(((RequestParam) declaredParamAnnotations[i][0]).value());
-            if (type.equals(Integer.class)) {
-                params[i] = Integer.parseInt(value);
-            } else if (type.equals(Float.class)) {
-                params[i] = Float.parseFloat(value);
-            } else if (type.equals(Double.class)) {
-                params[i] = Double.parseDouble(value);
-            } else if (type.equals(Boolean.class)) {
-                params[i] = Boolean.parseBoolean(value);
-            } else if (type.equals(String.class)) {
-                params[i] = value;
-            } else if (type.equals(Character.class)) {
-                params[i] = value.charAt(0);
-            } else if (type.equals(Byte.class)) {
-                params[i] = Byte.parseByte(value);
-            } else if (type.equals(RoutingContext.class)) {
+            if(type.equals(RoutingContext.class)){
                 params[i] = context;
-            } else {
-                params[i] = Json.decodeValue(value, declaredParams[i].getType());
+            }else{
+                String value = context.request().getParam(((RequestParam) declaredParamAnnotations[i][0]).value());
+                if (type.equals(Integer.class)) {
+                    params[i] = Integer.parseInt(value);
+                } else if (type.equals(Float.class)) {
+                    params[i] = Float.parseFloat(value);
+                } else if (type.equals(Double.class)) {
+                    params[i] = Double.parseDouble(value);
+                } else if (type.equals(Boolean.class)) {
+                    params[i] = Boolean.parseBoolean(value);
+                } else if (type.equals(String.class)) {
+                    params[i] = value;
+                } else if (type.equals(Character.class)) {
+                    params[i] = value.charAt(0);
+                } else if (type.equals(Byte.class)) {
+                    params[i] = Byte.parseByte(value);
+                } else {
+                    params[i] = Json.decodeValue(value, declaredParams[i].getType());
+                }
             }
         }
         return params;
