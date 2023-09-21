@@ -68,3 +68,4 @@ build/tmp/jar/MANIFEST.MF
 .gradle/8.3/fileHashes/resourceHashesCache.bin
 #don't ignore
 !gradle/wrapper/gradle-wrapper.jar
+.idea/

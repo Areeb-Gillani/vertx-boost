@@ -1,6 +1,7 @@
 package io.github.areebgillani.boost;
 
 import io.github.areebgillani.aspects.*;
+import io.github.areebgillani.boost.cache.MethodRecord;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -19,7 +20,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -28,7 +28,7 @@ public class Booster {
     Logger logger = LoggerFactory.getLogger(Booster.class);
     public Router router;
     public HashMap<String, Object> controllerInstanceMap = new HashMap<>();
-    public HashMap<String, Annotation[][]> methodBluePrint = new HashMap<>();
+    public HashMap<String, MethodRecord> methodBluePrint = new HashMap<>();
     String basePackage;
     Vertx vertx;
     JsonObject config;
@@ -47,45 +47,47 @@ public class Booster {
 
     private Object[] postParams(Method m, RoutingContext context) {
         Object[] params = new Object[m.getParameterCount()];
-        Parameter[] declaredParams = m.getParameters();
-        for (int i = 0; i < params.length; i++) {
-            Class<?> type = declaredParams[i].getType();
-            if (type.equals(RoutingContext.class)) {
-                params[i] = context;
-            } else {
-                params[i] = context.body().asJsonObject();
+        if(m.getParameterCount()>0) {
+            MethodRecord methodRecord = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> new MethodRecord(m.getParameters(), m.getParameterAnnotations()));
+            for (int i = 0; i < params.length; i++) {
+                Class<?> type = methodRecord.declaredParams()[i].getType();
+                if (type.equals(RoutingContext.class)) {
+                    params[i] = context;
+                } else {
+                    params[i] = context.body().asJsonObject();
+                }
             }
-
         }
         return params;
     }
 
     private Object[] getParams(Method m, RoutingContext context) {
         Object[] params = new Object[m.getParameterCount()];
-        Parameter[] declaredParams = m.getParameters();
-        Annotation[][] declaredParamAnnotations = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> m.getParameterAnnotations());
-        for (int i = 0; i < params.length; i++) {
-            Class<?> type = declaredParams[i].getType();
-            if(type.equals(RoutingContext.class)){
-                params[i] = context;
-            }else{
-                String value = context.request().getParam(((RequestParam) declaredParamAnnotations[i][0]).value());
-                if (type.equals(Integer.class)) {
-                    params[i] = Integer.parseInt(value);
-                } else if (type.equals(Float.class)) {
-                    params[i] = Float.parseFloat(value);
-                } else if (type.equals(Double.class)) {
-                    params[i] = Double.parseDouble(value);
-                } else if (type.equals(Boolean.class)) {
-                    params[i] = Boolean.parseBoolean(value);
-                } else if (type.equals(String.class)) {
-                    params[i] = value;
-                } else if (type.equals(Character.class)) {
-                    params[i] = value.charAt(0);
-                } else if (type.equals(Byte.class)) {
-                    params[i] = Byte.parseByte(value);
+        if(m.getParameterCount()>0) {
+            MethodRecord methodRecord = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> new MethodRecord(m.getParameters(), m.getParameterAnnotations()));
+            for (int i = 0; i < params.length; i++) {
+                Class<?> type = methodRecord.declaredParams()[i].getType();
+                if (type.equals(RoutingContext.class)) {
+                    params[i] = context;
                 } else {
-                    params[i] = Json.decodeValue(value, declaredParams[i].getType());
+                    String value = context.request().getParam(((RequestParam) methodRecord.declaredParamAnnotations()[i][0]).value());
+                    if (type.equals(Integer.class)) {
+                        params[i] = Integer.parseInt(value);
+                    } else if (type.equals(Float.class)) {
+                        params[i] = Float.parseFloat(value);
+                    } else if (type.equals(Double.class)) {
+                        params[i] = Double.parseDouble(value);
+                    } else if (type.equals(Boolean.class)) {
+                        params[i] = Boolean.parseBoolean(value);
+                    } else if (type.equals(String.class)) {
+                        params[i] = value;
+                    } else if (type.equals(Character.class)) {
+                        params[i] = value.charAt(0);
+                    } else if (type.equals(Byte.class)) {
+                        params[i] = Byte.parseByte(value);
+                    } else {
+                        params[i] = Json.decodeValue(value, methodRecord.declaredParams()[i].getType());
+                    }
                 }
             }
         }
