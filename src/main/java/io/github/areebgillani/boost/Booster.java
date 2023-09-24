@@ -1,6 +1,7 @@
 package io.github.areebgillani.boost;
 
 import io.github.areebgillani.aspects.*;
+import io.github.areebgillani.boost.cache.HttpRequest;
 import io.github.areebgillani.boost.cache.MethodRecord;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
@@ -47,12 +48,14 @@ public class Booster {
 
     private Object[] postParams(Method m, RoutingContext context) {
         Object[] params = new Object[m.getParameterCount()];
-        if(m.getParameterCount()>0) {
+        if (m.getParameterCount() > 0) {
             MethodRecord methodRecord = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> new MethodRecord(m.getParameters(), m.getParameterAnnotations()));
             for (int i = 0; i < params.length; i++) {
                 Class<?> type = methodRecord.declaredParams()[i].getType();
                 if (type.equals(RoutingContext.class)) {
                     params[i] = context;
+                } else if (type.equals(HttpRequest.class)) {
+                    params[i] = new HttpRequest(context);
                 } else {
                     params[i] = context.body().asJsonObject();
                 }
@@ -63,12 +66,14 @@ public class Booster {
 
     private Object[] getParams(Method m, RoutingContext context) {
         Object[] params = new Object[m.getParameterCount()];
-        if(m.getParameterCount()>0) {
+        if (m.getParameterCount() > 0) {
             MethodRecord methodRecord = methodBluePrint.computeIfAbsent(m.getName() + m.getClass().getName(), k -> new MethodRecord(m.getParameters(), m.getParameterAnnotations()));
             for (int i = 0; i < params.length; i++) {
                 Class<?> type = methodRecord.declaredParams()[i].getType();
                 if (type.equals(RoutingContext.class)) {
                     params[i] = context;
+                } else if (type.equals(HttpRequest.class)) {
+                    params[i] = new HttpRequest(context);
                 } else {
                     String value = context.request().getParam(((RequestParam) methodRecord.declaredParamAnnotations()[i][0]).value());
                     if (type.equals(Integer.class)) {
@@ -108,8 +113,8 @@ public class Booster {
                                 .handler(context -> {
                                     try {
                                         ResponseHandler.success(context,
-                                                        method.invoke(controllerInstanceMap.get(controller.getName()), postParams(method, context)),
-                                                        method.getReturnType());
+                                                method.invoke(controllerInstanceMap.get(controller.getName()), postParams(method, context)),
+                                                method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -119,8 +124,8 @@ public class Booster {
                                 .handler(context -> {
                                     try {
                                         ResponseHandler.success(context,
-                                                        method.invoke(controllerInstanceMap.get(controller.getName()), getParams(method, context)),
-                                                        method.getReturnType());
+                                                method.invoke(controllerInstanceMap.get(controller.getName()), getParams(method, context)),
+                                                method.getReturnType());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -192,7 +197,7 @@ public class Booster {
             if (annotation instanceof Service serv)
                 return serv.value();
         }
-        return "default-"+service.getName();
+        return "default-" + service.getName();
     }
 
     private void deployWorkers(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) throws Exception {
