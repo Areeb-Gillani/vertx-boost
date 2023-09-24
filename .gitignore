@@ -69,3 +69,5 @@ build/tmp/jar/MANIFEST.MF
 #don't ignore
 !gradle/wrapper/gradle-wrapper.jar
 .idea/
+.gradle/
+build/
