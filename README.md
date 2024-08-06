@@ -72,6 +72,10 @@ public class Main extends BoostApplication {
         super.start();
         run();
     }
+    public static void main(String[] args) {
+        Launcher l = new Launcher();
+        l.dispatch(new String[]{"run", Main.class.getCanonicalName(), "--launcher-class="+Launcher.class.getCanonicalName()});
+    }
 }
 ```
 ### Controller
