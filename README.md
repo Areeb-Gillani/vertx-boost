@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.8")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.12")
 }
 ```
 #### pom.xml
@@ -43,7 +43,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>0.0.8</version>
+	    <version>0.0.12</version>
 	</dependency>
 </dependencies>
 ```
@@ -64,19 +64,20 @@ Vertx says that every class that extends AbstractVerticle will be handled by its
 # Usage
 Booster, which is the initializing class of this utility, requires this JsonObject in the constructor in order to initialize.
 ### Initializer
-Please initialize the booster class in your main application class to register everything on startup.
+Please initialize it in your main application class to run everything on startup.
 ```java
-public class Application {
-    public void initVertxBoost(){
-        Booster booster = new Booster(vertx, router, config);
-        booster.boost(this.getClass().getPackage().getName());
-    }
+public class Main extends BoostApplication {
+    @Override
+    public void start() throws Exception {
+        super.start();
+        run();
+    }
 }
 ```
 ### Controller
 ```java
 @RestController
-public class ExampleController extends AbstractVerticle{
+public class ExampleController extends AbstractController{
     @GetMapping("/sayHi")
     public String sayHi(){
         return "hi";
@@ -91,7 +92,7 @@ public class ExampleController extends AbstractVerticle{
     }
     @PostMapping("/replyHiToUser")
     public void replyHiToUser(JsonObject body, RoutingContext context){
-         vertx.eventBus().request("MyTopic", body, reply->{
+         eventBus.request("MyTopic", body, reply->{
             if(reply.succeeded()){
                 context.json(reply.result().body());
             }
@@ -99,7 +100,7 @@ public class ExampleController extends AbstractVerticle{
     }
     @PostMapping("/requestExample")
     public void replyHiToUser(JsonObject body, HttpRequest request){
-         vertx.eventBus().request("MyTopic", body, request.getResponseHandler());
+         eventBus.request("MyTopic", body, request.getResponseHandler());
     }
 }
 ```
@@ -111,12 +112,12 @@ public class ExampleController extends AbstractVerticle{
 ### Service
 ```java
 @Service("ExampleWorker") // It is the same name that is described in configuration.
-public class ExampleService extends AbstractVerticle{
+public class ExampleService extends AbstractService{
     @Autowired
     DatabaseRepo myRepo;
     @Override
-    public void start(){
-        vertx.eventBus().consumer("MyTopic", this::replyHiToUser);
+    public void bindTopics(){
+        eventBus.consumer("MyTopic", this::replyHiToUser);
     }
     private void replyHiToUser(Message<Object> message){
         JsonObject vertxJsonObject = (JsonObject) message; 
