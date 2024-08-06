@@ -25,6 +25,7 @@ public class BoostApplication extends AbstractVerticle {
         vertx = Vertx.vertx();
         router = Router.router(vertx);
         loadConfig(null);
+        deploy();
     }
 
     public void init(Vertx vertx, Router router, String configPath) throws InterruptedException {
