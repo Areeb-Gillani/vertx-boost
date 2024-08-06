@@ -7,8 +7,8 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
 public abstract class AbstractService extends AbstractVerticle {
-    Logger logger = LoggerFactory.getLogger(AbstractService.class);
-    EventBus eventBus;
+    public Logger logger = LoggerFactory.getLogger(AbstractService.class);
+    public EventBus eventBus;
     @Override
     public void start() {
         eventBus = Vertx.currentContext().owner().eventBus();

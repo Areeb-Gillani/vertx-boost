@@ -4,13 +4,13 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "0.0.11"
+version = "0.0.12"
 publishing {
     publications {
         create<MavenPublication>("maven") {
             groupId = "io.github.areebgillani"
             artifactId = rootProject.name
-            version = "0.0.11"
+            version = "0.0.12"
             from(components["java"])
         }
     }
