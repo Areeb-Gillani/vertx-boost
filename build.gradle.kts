@@ -8,9 +8,9 @@ version = "0.0.12"
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "io.github.areebgillani"
+            groupId = project.group.toString()
             artifactId = rootProject.name
-            version = "0.0.12"
+            version = project.version.toString()
             from(components["java"])
         }
     }

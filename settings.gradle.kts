@@ -1,2 +1,2 @@
-rootProject.name = "vert-boost"
+rootProject.name = "vertx-boost"
 
