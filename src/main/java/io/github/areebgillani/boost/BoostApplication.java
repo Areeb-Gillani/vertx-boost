@@ -67,16 +67,12 @@ public class BoostApplication extends AbstractVerticle {
 
     private void deploy() {
         if (config != null) {
-            vertx.deployVerticle(this, new DeploymentOptions().setConfig(config))
-                    .onSuccess(resp -> {
-                        Booster booster = new Booster(vertx, router, config);
-                        try {
-                            booster.boost(this.getClass().getPackage().getName());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .onFailure(failed -> System.out.println(failed.getMessage()));
+            Booster booster = new Booster(vertx, router, config);
+            try {
+                booster.boost(this.getClass().getPackage().getName());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         } else
             logger.info("Deployment config not found.");
     }
