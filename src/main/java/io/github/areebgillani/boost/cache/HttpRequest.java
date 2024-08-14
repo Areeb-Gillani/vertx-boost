@@ -7,9 +7,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class HttpRequest {
     RoutingContext routingContext;
-    Handler<AsyncResult<Message<Object>>> responseHandler = response->{
-            routingContext.json(response.succeeded()?response.result().body():response.cause());
-    };
+    Handler<AsyncResult<Message<Object>>> responseHandler = response-> routingContext.json(response.succeeded()?response.result().body():response.cause());
 
     public HttpRequest(RoutingContext routingContext) {
         this.routingContext = routingContext;
