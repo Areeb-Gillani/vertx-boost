@@ -20,14 +20,17 @@ public class BoostApplication extends AbstractVerticle {
     Vertx vertx;
     JsonObject config;
     Router router;
+    protected static BoostApplication instance;
+    public static BoostApplication getInstance(){
+        return instance;
+    }
 
     @Override
     public void start() throws Exception {
         super.start();
         vertx = Vertx.vertx();
         router = Router.router(vertx);
-        loadConfig(null);
-        deploy();
+        instance = this;
     }
 
     public void init(Vertx vertx, Router router, String configPath) throws InterruptedException {
@@ -57,16 +60,18 @@ public class BoostApplication extends AbstractVerticle {
         latch.await();
     }
 
-    public void run() {
-        logger.info("Initializing Vertx Application Server...");
-        vertx.createHttpServer()
-                .requestHandler(router)
-                .listen(config().getInteger("http.port", 8080))
-                .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort()+"]. ")))
-                .onFailure(failed -> logger.info(failed.getMessage()));
+    public void run(String folderPath, boolean isRestful) throws InterruptedException {
+        init(vertx, router, folderPath);
+        if(isRestful) {
+            logger.info("Initializing Vertx Application Server...");
+            vertx.createHttpServer()
+                    .requestHandler(router)
+                    .listen(config.getInteger("http.port", 8080))
+                    .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort() + "]. ")))
+                    .onFailure(failed -> logger.info(failed.getMessage()));
+        }
 
     }
-
     public static void run(Class<? extends BoostApplication> clazz, String[] args) {
         LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
         params.addAll(List.of(args));
@@ -92,5 +97,14 @@ public class BoostApplication extends AbstractVerticle {
                         .setOptional(true)
                         .setConfig(new JsonObject().put("path", folderPath==null||folderPath.isEmpty()?"config.json":folderPath)))
                 .addStore(new ConfigStoreOptions().setType("sys"));
+    }
+
+    @Override
+    public Vertx getVertx() {
+        return vertx;
+    }
+
+    public JsonObject getConfig() {
+        return config;
     }
 }
