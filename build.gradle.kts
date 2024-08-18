@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "0.0.12"
+version = "0.0.13"
 publishing {
     publications {
         create<MavenPublication>("maven") {
