@@ -6,9 +6,11 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.SSLOptions;
 import io.vertx.ext.web.Router;
 
 import java.util.LinkedHashSet;
@@ -21,7 +23,8 @@ public class BoostApplication extends AbstractVerticle {
     private JsonObject config;
     private Router router;
     protected static BoostApplication instance;
-    public static BoostApplication getInstance(){
+
+    public static BoostApplication getInstance() {
         return instance;
     }
 
@@ -39,12 +42,14 @@ public class BoostApplication extends AbstractVerticle {
         loadConfig(configPath);
         deploy();
     }
+
     public void init(Vertx vertx, Router router, JsonObject config) {
         this.vertx = vertx;
         this.router = router;
         this.config = config;
         deploy();
     }
+
     private void loadConfig(String folderPath) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         ConfigRetriever.create(vertx, initRetrieverConfig(folderPath)).getConfig().onComplete(ar -> {
@@ -62,22 +67,24 @@ public class BoostApplication extends AbstractVerticle {
 
     public void deployApplication(String folderPath) throws InterruptedException {
         init(vertx, router, folderPath);
-        if(config.containsKey("server")
-                && config.containsKey("http")
-                && config.getJsonObject("server")
-                .getJsonObject("http").getBoolean("enable", true)) {
-            logger.info("Initializing Vertx Application Server...");
-            vertx.createHttpServer()
-                    .requestHandler(router)
-                    .listen(config
-                            .getJsonObject("server")
-                            .getJsonObject("http")
-                            .getInteger("port", 8080))
-                    .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort() + "]. ")))
-                    .onFailure(failed -> logger.info(failed.getMessage()));
+        if (config.containsKey("server")) {
+            JsonObject serverConfig = config.getJsonObject("server");
+            if (serverConfig.containsKey("http")) {
+                JsonObject httpConfig = serverConfig.getJsonObject("http");
+                if(httpConfig.getBoolean("enable", true)) {
+                    logger.info("Initializing Vertx Application Server...");
+                    HttpServer httpServer = vertx.createHttpServer().requestHandler(router);
+                    if(httpConfig.containsKey("SSL"))
+                        httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
+                    httpServer.listen(httpConfig.getInteger("port", 8080))
+                            .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort() + "]. ")))
+                            .onFailure(failed -> logger.info(failed.getMessage()));
+                }
+            }
         }
 
     }
+
     public static void run(Class<? extends BoostApplication> clazz, String[] args) {
         LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
         params.addAll(List.of(args));
@@ -101,7 +108,7 @@ public class BoostApplication extends AbstractVerticle {
                 .addStore(new ConfigStoreOptions()
                         .setType("file")
                         .setOptional(true)
-                        .setConfig(new JsonObject().put("path", folderPath==null||folderPath.isEmpty()?"config.json":folderPath)))
+                        .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
                 .addStore(new ConfigStoreOptions().setType("sys"));
     }
 
