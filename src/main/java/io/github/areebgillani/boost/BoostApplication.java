@@ -17,9 +17,9 @@ import java.util.concurrent.CountDownLatch;
 
 public class BoostApplication extends AbstractVerticle {
     Logger logger = LoggerFactory.getLogger(BoostApplication.class);
-    Vertx vertx;
-    JsonObject config;
-    Router router;
+    private Vertx vertx;
+    private JsonObject config;
+    private Router router;
     protected static BoostApplication instance;
     public static BoostApplication getInstance(){
         return instance;
@@ -45,28 +45,34 @@ public class BoostApplication extends AbstractVerticle {
         this.config = config;
         deploy();
     }
-    public void loadConfig(String folderPath) throws InterruptedException {
+    private void loadConfig(String folderPath) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         ConfigRetriever.create(vertx, initRetrieverConfig(folderPath)).getConfig().onComplete(ar -> {
             if (ar.failed()) {
                 latch.countDown();
-                logger.error("Error in config loading...!");
+                logger.error("Error in config loading!");
             } else {
                 config = ar.result();
                 latch.countDown();
-                logger.info("Config loaded successfully..!");
+                logger.info("Config loaded successfully!");
             }
         });
         latch.await();
     }
 
-    public void run(String folderPath, boolean isRestful) throws InterruptedException {
+    public void deployApplication(String folderPath) throws InterruptedException {
         init(vertx, router, folderPath);
-        if(isRestful) {
+        if(config.containsKey("server")
+                && config.containsKey("http")
+                && config.getJsonObject("server")
+                .getJsonObject("http").getBoolean("enable", true)) {
             logger.info("Initializing Vertx Application Server...");
             vertx.createHttpServer()
                     .requestHandler(router)
-                    .listen(config.getInteger("http.port", 8080))
+                    .listen(config
+                            .getJsonObject("server")
+                            .getJsonObject("http")
+                            .getInteger("port", 8080))
                     .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort() + "]. ")))
                     .onFailure(failed -> logger.info(failed.getMessage()));
         }
