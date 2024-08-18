@@ -3,8 +3,16 @@ plugins {
     id("maven-publish")
 }
 
-group = "io.github.areebgillani"
-version = "0.0.12"
+group = "io.github.Areeb-Gillani"
+version = "0.1.0"
+
+val vertxVersion = "4.5.9"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -15,6 +23,8 @@ publishing {
         }
     }
 }
+
+
 tasks.publishToMavenLocal {
     dependsOn(tasks.build)
     onlyIf {
@@ -24,10 +34,11 @@ tasks.publishToMavenLocal {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     implementation("org.reflections:reflections:0.10.2")
-    compileOnly("io.vertx:vertx-web:4.4.5")
-    implementation("io.vertx:vertx-config:4.4.5")
+    compileOnly("io.vertx:vertx-web:$vertxVersion")
+    implementation("io.vertx:vertx-config:$vertxVersion")
 }
