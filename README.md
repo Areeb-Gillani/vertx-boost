@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.12")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.14")
 }
 ```
 #### pom.xml
@@ -43,7 +43,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>0.0.12</version>
+	    <version>0.0.14</version>
 	</dependency>
 </dependencies>
 ```
@@ -67,14 +67,14 @@ Booster, which is the initializing class of this utility, requires this JsonObje
 Please initialize it in your main application class to run everything on startup.
 ```java
 public class Main extends BoostApplication {
-    @Override
+       @Override
     public void start() throws Exception {
         super.start();
-        run();
+        deployApplication("config.json");
     }
+
     public static void main(String[] args) {
-        Launcher l = new Launcher();
-        l.dispatch(new String[]{"run", Main.class.getCanonicalName(), "--launcher-class="+Launcher.class.getCanonicalName()});
+        run(Application.class, args);
     }
 }
 ```
