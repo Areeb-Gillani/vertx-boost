@@ -4,13 +4,15 @@ import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class BoostApplication extends AbstractVerticle {
@@ -63,6 +65,12 @@ public class BoostApplication extends AbstractVerticle {
                 .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort()+"]. ")))
                 .onFailure(failed -> logger.info(failed.getMessage()));
 
+    }
+
+    public static void run(Class<? extends BoostApplication> clazz, String[] args) {
+        LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
+        params.addAll(List.of(args));
+        new Launcher().dispatch(params.toArray(new String[0]));
     }
 
     private void deploy() {
