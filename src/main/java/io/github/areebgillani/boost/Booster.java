@@ -56,8 +56,12 @@ public class Booster {
                     params[i] = context;
                 } else if (type.equals(HttpRequest.class)) {
                     params[i] = new HttpRequest(context);
-                } else {
+                } else if (type.equals(String.class)) {
+                    params[i] = context.body().asString();
+                } else if(type.equals(JsonObject.class)) {
                     params[i] = context.body().asJsonObject();
+                } else {
+                    params[i] = Json.decodeValue(context.body().asString(), methodRecord.declaredParams()[i].getType());
                 }
             }
         }
