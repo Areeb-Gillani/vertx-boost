@@ -102,16 +102,16 @@ public class ExampleController extends AbstractController{
             }
         });
     }
-    @PostMapping("/requestExample")
-    public void replyHiToUser(JsonObject body, HttpRequest request){
+    @PostMapping("/MyTopic")
+    public void MyTopic(JsonObject body, HttpRequest request){
          eventBus.request("MyTopic", body, request.getResponseHandler());
     }
-    @PostMapping("/requestExample")
-    public void replyHiToUser(String body, HttpRequest request){
+    @PostMapping("/MyTopicViaStr")
+    public void MyTopicViaStr(String body, HttpRequest request){
          eventBus.request("MyTopicViaStr", body, request.getResponseHandler());
     }
-    @PostMapping("/requestExample")
-    public void replyHiToUser(ClassA body, HttpRequest request){
+    @PostMapping("/MyTopicViaClass")
+    public void MyTopicViaClass(ClassA body, HttpRequest request){
          eventBus.request("MyTopicViaClass", body, request.getResponseHandler());
     }
 }
