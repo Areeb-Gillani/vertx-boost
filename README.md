@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.14")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.16")
 }
 ```
 #### pom.xml
@@ -43,7 +43,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>0.0.14</version>
+	    <version>0.0.16</version>
 	</dependency>
 </dependencies>
 ```
@@ -105,6 +105,14 @@ public class ExampleController extends AbstractController{
     @PostMapping("/requestExample")
     public void replyHiToUser(JsonObject body, HttpRequest request){
          eventBus.request("MyTopic", body, request.getResponseHandler());
+    }
+    @PostMapping("/requestExample")
+    public void replyHiToUser(String body, HttpRequest request){
+         eventBus.request("MyTopicViaStr", body, request.getResponseHandler());
+    }
+    @PostMapping("/requestExample")
+    public void replyHiToUser(ClassA body, HttpRequest request){
+         eventBus.request("MyTopicViaClass", body, request.getResponseHandler());
     }
 }
 ```
