@@ -1,6 +1,6 @@
 package io.github.areebgillani.boost;
 
-import io.github.areebgillani.aspects.*;
+import io.github.areebgillani.boost.aspects.*;
 import io.github.areebgillani.boost.utils.HttpRequest;
 import io.github.areebgillani.boost.utils.MethodRecord;
 import io.vertx.core.DeploymentOptions;

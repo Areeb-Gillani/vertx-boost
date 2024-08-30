@@ -1,4 +1,4 @@
-package io.github.areebgillani.aspects;
+package io.github.areebgillani.boost.aspects;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface RestController {
+public @interface Repository {
+    String value() default "";
 }
