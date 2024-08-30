@@ -70,7 +70,8 @@ public class Main extends BoostApplication {
        @Override
     public void start() throws Exception {
         super.start();
-	// In case you want to make microservices connected with hazelcast cluster you need to pass the boolean as true and add cluster configs in the config file
+	// In case you want to make microservices connected with hazelcast cluster
+        // you need to pass the boolean as true and add cluster configs in the config file
         deployApplication("config.json", false);
     }
 
@@ -131,8 +132,10 @@ public class ExampleService extends AbstractService{
     @Override
     public void bindTopics(){
         eventBus.consumer("MyTopic", this::replyHiToUser);
-	//in case of clustered mode on, you need to use clusteredEventBus if you want other microservices to discover this topic
-	//clusteredEventBus.consumer("MyTopic", this::replyHiToUser);
+	// In case of clustered mode on, you need to use clusteredEventBus.
+        // So that other microservices can discover this topic
+
+       // clusteredEventBus.consumer("MyTopic", this::replyHiToUser);
     }
     private void replyHiToUser(Message<Object> message){
         JsonObject vertxJsonObject = (JsonObject) message; 
