@@ -9,9 +9,12 @@ import io.vertx.core.impl.logging.LoggerFactory;
 public abstract class AbstractService extends AbstractVerticle {
     public Logger logger = LoggerFactory.getLogger(AbstractService.class);
     public EventBus eventBus;
+    public EventBus clusteredEventBus;
     @Override
     public void start() {
         eventBus = Vertx.currentContext().owner().eventBus();
+        if(BoostApplication.getInstance().getClusteredVertx()!=null)
+            clusteredEventBus = BoostApplication.getInstance().getClusteredVertx().eventBus();
         bindTopics();
     }
     public abstract void bindTopics();

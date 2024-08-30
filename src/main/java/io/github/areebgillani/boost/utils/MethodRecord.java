@@ -1,4 +1,4 @@
-package io.github.areebgillani.boost.cache;
+package io.github.areebgillani.boost.utils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Parameter;

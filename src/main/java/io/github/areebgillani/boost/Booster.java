@@ -1,8 +1,8 @@
 package io.github.areebgillani.boost;
 
 import io.github.areebgillani.aspects.*;
-import io.github.areebgillani.boost.cache.HttpRequest;
-import io.github.areebgillani.boost.cache.MethodRecord;
+import io.github.areebgillani.boost.utils.HttpRequest;
+import io.github.areebgillani.boost.utils.MethodRecord;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;

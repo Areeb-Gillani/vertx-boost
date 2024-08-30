@@ -1,4 +1,4 @@
-package io.github.areebgillani.boost.cache;
+package io.github.areebgillani.boost.utils;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;

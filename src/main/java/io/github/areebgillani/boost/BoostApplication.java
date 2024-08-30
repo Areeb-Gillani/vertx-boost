@@ -1,11 +1,13 @@
 package io.github.areebgillani.boost;
 
+import io.github.areebgillani.boost.utils.VertxClusterUtils;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -19,7 +21,8 @@ import java.util.concurrent.CountDownLatch;
 
 public class BoostApplication extends AbstractVerticle {
     Logger logger = LoggerFactory.getLogger(BoostApplication.class);
-    private Vertx vertx;
+    private Vertx localVertx;
+    private Vertx clusteredVertx;
     private JsonObject config;
     private Router router;
     protected static BoostApplication instance;
@@ -31,28 +34,26 @@ public class BoostApplication extends AbstractVerticle {
     @Override
     public void start() throws Exception {
         super.start();
-        vertx = Vertx.vertx();
-        router = Router.router(vertx);
+        localVertx = Vertx.vertx();
+        router = Router.router(localVertx);
         instance = this;
     }
 
     public void init(Vertx vertx, Router router, String configPath) throws InterruptedException {
-        this.vertx = vertx;
+        this.localVertx = vertx;
         this.router = router;
         loadConfig(configPath);
-        deploy();
     }
 
     public void init(Vertx vertx, Router router, JsonObject config) {
-        this.vertx = vertx;
+        this.localVertx = vertx;
         this.router = router;
         this.config = config;
-        deploy();
     }
 
     private void loadConfig(String folderPath) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        ConfigRetriever.create(vertx, initRetrieverConfig(folderPath)).getConfig().onComplete(ar -> {
+        ConfigRetriever.create(localVertx, initRetrieverConfig(folderPath)).getConfig().onComplete(ar -> {
             if (ar.failed()) {
                 latch.countDown();
                 logger.error("Error in config loading!");
@@ -65,15 +66,18 @@ public class BoostApplication extends AbstractVerticle {
         latch.await();
     }
 
-    public void deployApplication(String folderPath) throws InterruptedException {
-        init(vertx, router, folderPath);
+    public void deployApplication(String folderPath, Boolean isClustered) throws InterruptedException {
+        init(localVertx, router, folderPath);
+        if(isClustered)
+            clusteredVertx = VertxClusterUtils.initClusterVertx(config, getVertxOptions());
+        deploy(isClustered);
         if (config.containsKey("server")) {
             JsonObject serverConfig = config.getJsonObject("server");
             if (serverConfig.containsKey("http")) {
                 JsonObject httpConfig = serverConfig.getJsonObject("http");
                 if(httpConfig.getBoolean("enable", true)) {
                     logger.info("Initializing Vertx Application Server...");
-                    HttpServer httpServer = vertx.createHttpServer().requestHandler(router);
+                    HttpServer httpServer = localVertx.createHttpServer().requestHandler(router);
                     if(httpConfig.containsKey("SSL"))
                         httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
                     httpServer.listen(httpConfig.getInteger("port", 8080))
@@ -91,9 +95,9 @@ public class BoostApplication extends AbstractVerticle {
         new Launcher().dispatch(params.toArray(new String[0]));
     }
 
-    private void deploy() {
+    private void deploy(boolean isClustered) {
         if (config != null) {
-            Booster booster = new Booster(vertx, router, config);
+            Booster booster = new Booster(localVertx, router, config);
             try {
                 booster.boost(this.getClass().getPackage().getName());
             } catch (Exception e) {
@@ -114,7 +118,17 @@ public class BoostApplication extends AbstractVerticle {
 
     @Override
     public Vertx getVertx() {
-        return vertx;
+        return localVertx;
+    }
+    private VertxOptions getVertxOptions() {
+        return new VertxOptions()
+                .setEventLoopPoolSize(config.getInteger("eventLoopPoolSize", 5))
+                .setInternalBlockingPoolSize(config.getInteger("internalBlockingPoolSize", 20))
+                .setWorkerPoolSize(config.getInteger("workerPoolSize", 20));
+    }
+
+    public Vertx getClusteredVertx() {
+        return clusteredVertx;
     }
 
     public JsonObject getConfig() {

@@ -4,7 +4,8 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "0.0.16"
+version = "0.0.17"
+val vertxVersion = "4.4.5"
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -28,6 +29,7 @@ repositories {
 
 dependencies {
     implementation("org.reflections:reflections:0.10.2")
-    compileOnly("io.vertx:vertx-web:4.4.5")
-    implementation("io.vertx:vertx-config:4.4.5")
+    compileOnly("io.vertx:vertx-web:$vertxVersion")
+    implementation("io.vertx:vertx-config:$vertxVersion")
+    implementation("io.vertx:vertx-hazelcast:$vertxVersion")
 }
