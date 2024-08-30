@@ -212,9 +212,9 @@ public class Booster {
                 .setInstances(workerConfig.getInteger("instance", 5))
                 .setWorker(true), res -> {
             if (res.succeeded())
-                logger.info("Deployment Successful.");
+                logger.info(workerName+" successfully deployed.");
             else
-                logger.error("Deployment Failed." + res.cause());
+                logger.error(workerName+" deployment failed." + res.cause());
         });
     }
 }
