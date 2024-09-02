@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class BoostApplication extends AbstractVerticle {
-    Logger logger = LoggerFactory.getLogger(BoostApplication.class);
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     private Vertx localVertx;
     private Vertx clusteredVertx;
     private JsonObject config;
