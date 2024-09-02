@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "0.0.17"
+version = "0.0.18"
 val vertxVersion = "4.4.5"
 publishing {
     publications {
@@ -32,4 +32,7 @@ dependencies {
     compileOnly("io.vertx:vertx-web:$vertxVersion")
     implementation("io.vertx:vertx-config:$vertxVersion")
     implementation("io.vertx:vertx-hazelcast:$vertxVersion")
+    implementation("io.vertx:vertx-micrometer-metrics:$vertxVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.11.5")
+
 }

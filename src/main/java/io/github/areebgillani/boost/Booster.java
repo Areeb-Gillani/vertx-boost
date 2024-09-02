@@ -1,6 +1,7 @@
 package io.github.areebgillani.boost;
 
 import io.github.areebgillani.boost.aspects.*;
+import io.github.areebgillani.boost.pojos.BoostResponseTemplate;
 import io.github.areebgillani.boost.utils.HttpRequest;
 import io.github.areebgillani.boost.utils.MethodRecord;
 import io.vertx.core.DeploymentOptions;
@@ -107,6 +108,7 @@ public class Booster {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> controllers = reflections.getTypesAnnotatedWith(RestController.class);
         router.route().handler(BodyHandler.create());
+        router.errorHandler(404, resp-> ResponseHandler.error404(resp, new BoostResponseTemplate(404, null, null, "Url not found", null)));
         for (Class<?> controller : controllers) {
             Object controllerInstance = controller.getConstructor().newInstance();
             controllerInstanceMap.put(controller.getName(), controllerInstance);

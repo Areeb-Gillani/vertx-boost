@@ -13,13 +13,13 @@ public class ResponseHandler {
                 .putHeader("Content-Type", "text/plain")
                 .end(Json.encode(resp));
     }
-    public void error(RoutingContext context, Object resp){
+    public static void error(RoutingContext context, Object resp){
         context.response().setChunked(true)
                 .setStatusCode(500)
                 .putHeader("Content-Type", "text/plain")
                 .end(Json.encode(resp));
     }
-    public void error404(RoutingContext context, Object resp){
+    public static void error404(RoutingContext context, Object resp){
         context.response().setChunked(true)
                 .setStatusCode(404)
                 .putHeader("Content-Type", "text/plain")

@@ -14,6 +14,9 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SSLOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.PrometheusScrapingHandler;
+import io.vertx.micrometer.VertxPrometheusOptions;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,8 +71,10 @@ public class BoostApplication extends AbstractVerticle {
 
     public void deployApplication(String folderPath, Boolean isClustered) throws InterruptedException {
         init(localVertx, router, folderPath);
+        VertxOptions vertxOptions = enableMonitoringOption(getVertxOptions());
+        localVertx = Vertx.vertx(vertxOptions);
         if(isClustered)
-            clusteredVertx = VertxClusterUtils.initClusterVertx(config, getVertxOptions());
+            clusteredVertx = VertxClusterUtils.initClusterVertx(config, vertxOptions);
         deploy(isClustered);
         if (config.containsKey("server")) {
             JsonObject serverConfig = config.getJsonObject("server");
@@ -86,7 +91,19 @@ public class BoostApplication extends AbstractVerticle {
                 }
             }
         }
-
+    }
+    private VertxOptions enableMonitoringOption(VertxOptions vertxOptions) {
+        JsonObject metricsConfig = config.getJsonObject("metrics");
+        if(metricsConfig!=null && metricsConfig.getBoolean("enabled")){
+            MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+                    .setEnabled(true);
+            if(metricsConfig.getString("tool").equals("prometheus")){
+                metricsOptions.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true));
+                router.route("/metrics").handler(PrometheusScrapingHandler.create());
+            }
+            vertxOptions.setMetricsOptions(metricsOptions);
+        }
+        return vertxOptions;
     }
 
     public static void run(Class<? extends BoostApplication> clazz, String[] args) {
