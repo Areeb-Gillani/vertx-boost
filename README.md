@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.17")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.18")
 }
 ```
 #### pom.xml
@@ -43,21 +43,36 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>0.0.17</version>
+	    <version>0.0.18</version>
 	</dependency>
 </dependencies>
 ```
 # Configuration
 Vertx says that every class that extends AbstractVerticle will be handled by its own dedicated threads and thread pools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea, then please visit https://vertx.io first. A service is basically a worker verticle; you can configure it using the following JSON:
-### Config JSON
+### Config.json
 ```json
 {
+   {...},
    "workers":{
       "ExampleWorker":{
          "instance":5,
          "poolSize":6
       }
-   }
+   },
+   {...}
+}
+```
+# Monitoring
+ Add these lines for performance monitoring metrics enablement via Prometheus.
+### Config.json
+```json
+{
+   {...},
+   "metrics": {
+    "enabled": true,
+    "tool": "prometheus"
+  },
+  {...}
 }
 ```
  
