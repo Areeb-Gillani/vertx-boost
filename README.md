@@ -3,7 +3,7 @@
 This project adds the flavor of SpringBoot's style annotations in vertx to reduce the learning curve. It follows the same annotation style as @RestController, @Service, @Repository, @Autowired, @RequestParam, @RequestBody, @PostMapping and @GetMapping, whereas controller and service classes should extend AbstractVerticle as per the implementation of Vertx.
  
 # Background and Basics
-### Vertx vs. Spring
+### Vertx vs Spring
 Vertx is an event-driven toolkit backed by the Eclipse Foundation. It's a polyglot and is used for highly concurrent code writing. When compared to Spring (Webflux or Boot), Vertx is exceptionally fast. In my performance testing, I found Vertx to be 75% faster than Spring. Techempower has also shared very similar results on their site: https://www.techempower.com/benchmarks/#section=data-r21. Now considering this, if you want to develop a state-of-the-art application with high throughput, one should go for vertx, as it is Java's fastest unopinionated framework available today (Techempower's results also back this statement).
  
 ### Basics of Vertx
@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.18")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:0.0.19")
 }
 ```
 #### pom.xml
@@ -43,7 +43,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>0.0.18</version>
+	    <version>0.0.19</version>
 	</dependency>
 </dependencies>
 ```
@@ -82,14 +82,6 @@ Booster, which is the initializing class of this utility, requires this JsonObje
 Please initialize it in your main application class to run everything on startup.
 ```java
 public class Main extends BoostApplication {
-       @Override
-    public void start() throws Exception {
-        super.start();
-	// In case you want to make microservices connected with hazelcast cluster
-        // you need to pass the boolean as true and add cluster configs in the config file
-        deployApplication("config.json", false);
-    }
-
     public static void main(String[] args) {
         run(Application.class, args);
     }
