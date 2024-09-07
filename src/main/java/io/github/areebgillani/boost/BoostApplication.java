@@ -108,17 +108,6 @@ public class BoostApplication extends AbstractVerticle {
         }
         return vertxOptions;
     }
-
-    public static void run(Class<? extends BoostApplication> clazz, String[] args) {
-        LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
-        params.addAll(List.of(args));
-        new Launcher().dispatch(params.toArray(new String[0]));
-    }
-    public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath, boolean isClusteredMode) {
-        BoostApplication.configPath = configPath;
-        BoostApplication.isClusteredMode = isClusteredMode;
-        run(clazz, args);
-    }
     private void deploy(boolean isClustered) {
         if (config != null) {
             Booster booster = new Booster(localVertx, router, config);
@@ -157,5 +146,23 @@ public class BoostApplication extends AbstractVerticle {
 
     public JsonObject getConfig() {
         return config;
+    }
+    public static void run(Class<? extends BoostApplication> clazz, String[] args) {
+        LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
+        params.addAll(List.of(args));
+        new Launcher().dispatch(params.toArray(new String[0]));
+    }
+    public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath, boolean isClusteredMode) {
+        BoostApplication.configPath = configPath;
+        BoostApplication.isClusteredMode = isClusteredMode;
+        run(clazz, args);
+    }
+    public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath) {
+        BoostApplication.configPath = configPath;
+        run(clazz, args);
+    }
+    public static void run(Class<? extends BoostApplication> clazz, String[] args, boolean isClusteredMode) {
+        BoostApplication.isClusteredMode = isClusteredMode;
+        run(clazz, args);
     }
 }
