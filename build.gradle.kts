@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "0.0.18"
+version = "0.0.19"
 val vertxVersion = "4.4.5"
 publishing {
     publications {

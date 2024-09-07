@@ -29,6 +29,8 @@ public class BoostApplication extends AbstractVerticle {
     private JsonObject config;
     private Router router;
     protected static BoostApplication instance;
+    private static boolean isClusteredMode = false;
+    private static String configPath = "config.json";
 
     public static BoostApplication getInstance() {
         return instance;
@@ -40,6 +42,7 @@ public class BoostApplication extends AbstractVerticle {
         localVertx = Vertx.vertx();
         router = Router.router(localVertx);
         instance = this;
+        deployApplication(configPath, isClusteredMode);
     }
 
     public void init(Vertx vertx, Router router, String configPath) throws InterruptedException {
@@ -111,7 +114,11 @@ public class BoostApplication extends AbstractVerticle {
         params.addAll(List.of(args));
         new Launcher().dispatch(params.toArray(new String[0]));
     }
-
+    public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath, boolean isClusteredMode) {
+        BoostApplication.configPath = configPath;
+        BoostApplication.isClusteredMode = isClusteredMode;
+        run(clazz, args);
+    }
     private void deploy(boolean isClustered) {
         if (config != null) {
             Booster booster = new Booster(localVertx, router, config);
