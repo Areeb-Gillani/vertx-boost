@@ -9,6 +9,7 @@ import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
@@ -85,7 +86,11 @@ public class BoostApplication extends AbstractVerticle {
                 JsonObject httpConfig = serverConfig.getJsonObject("http");
                 if(httpConfig.getBoolean("enable", true)) {
                     logger.info("Initializing Vertx Application Server...");
-                    HttpServer httpServer = localVertx.createHttpServer().requestHandler(router);
+                    HttpServerOptions options = new HttpServerOptions();
+                    options.setTcpFastOpen(true)
+                            .setTcpQuickAck(true)
+                            .setTcpNoDelay(true);
+                    HttpServer httpServer = localVertx.createHttpServer(options).requestHandler(router);
                     if(httpConfig.containsKey("SSL"))
                         httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
                     httpServer.listen(httpConfig.getInteger("port", 8080))
@@ -164,5 +169,9 @@ public class BoostApplication extends AbstractVerticle {
     public static void run(Class<? extends BoostApplication> clazz, String[] args, boolean isClusteredMode) {
         BoostApplication.isClusteredMode = isClusteredMode;
         run(clazz, args);
+    }
+
+    public Router getRouter() {
+        return router;
     }
 }
