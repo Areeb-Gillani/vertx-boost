@@ -1,60 +1,61 @@
 package io.github.areebgillani.boost;
 
+import io.github.areebgillani.boost.pojos.EndPointController;
 import io.github.areebgillani.boost.utils.VertxClusterUtils;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Launcher;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.SSLOptions;
-import io.vertx.ext.web.Router;
 import io.vertx.micrometer.MicrometerMetricsOptions;
-import io.vertx.micrometer.PrometheusScrapingHandler;
 import io.vertx.micrometer.VertxPrometheusOptions;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 
 public class BoostApplication extends AbstractVerticle {
     Logger logger = LoggerFactory.getLogger(this.getClass());
     private Vertx localVertx;
     private Vertx clusteredVertx;
     private JsonObject config;
-    private Router router;
     protected static BoostApplication instance;
     private static boolean isClusteredMode = false;
     private static String configPath = "config.json";
-
+    private boolean hasConfig = false;
+    private boolean isMonitorable = false;
+    private HashMap<String, List<EndPointController>> controllers;
+    private Booster booster;
     public static BoostApplication getInstance() {
         return instance;
     }
+    private final Promise<BoostApplication> promise = Promise.promise();
+    public static boolean printRoutes=true;
 
     @Override
     public void start() throws Exception {
         super.start();
         localVertx = Vertx.vertx();
-        router = Router.router(localVertx);
         instance = this;
-        deployApplication(configPath, isClusteredMode);
+        localVertx.executeBlocking(()->{
+            deployApplication(configPath, isClusteredMode);
+            return promise;
+        });
     }
 
-    public void init(Vertx vertx, Router router, String configPath) throws InterruptedException {
+    public void init(Vertx vertx, String configPath) throws InterruptedException {
         this.localVertx = vertx;
-        this.router = router;
         loadConfig(configPath);
+        booster = new Booster(localVertx, config);
+        hasConfig = true;
     }
 
-    public void init(Vertx vertx, Router router, JsonObject config) {
+    public void init(Vertx vertx, JsonObject config) {
         this.localVertx = vertx;
-        this.router = router;
         this.config = config;
     }
 
@@ -73,33 +74,37 @@ public class BoostApplication extends AbstractVerticle {
         latch.await();
     }
 
-    public void deployApplication(String folderPath, Boolean isClustered) throws InterruptedException {
-        init(localVertx, router, folderPath);
+    public void deployApplication(String folderPath, Boolean isClustered) throws Exception {
+        init(localVertx, folderPath);
         VertxOptions vertxOptions = enableMonitoringOption(getVertxOptions());
         localVertx = Vertx.vertx(vertxOptions);
+        booster.boost(this.getClass().getPackage().getName());
         if(isClustered)
             clusteredVertx = VertxClusterUtils.initClusterVertx(config, vertxOptions);
-        deploy(isClustered);
+        booster.getServiceWorkerList().forEach(service->{
+            try {
+                deployServices(service.getGlobalConfig(), service.getServiceSupplier(), service.getWorkerName(), service.getWorkerConfig());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        deployHTTPServer();
+        promise.complete(this);
+    }
+
+    private void deployHTTPServer() {
         if (config.containsKey("server")) {
             JsonObject serverConfig = config.getJsonObject("server");
             if (serverConfig.containsKey("http")) {
                 JsonObject httpConfig = serverConfig.getJsonObject("http");
                 if(httpConfig.getBoolean("enable", true)) {
-                    logger.info("Initializing Vertx Application Server...");
-                    HttpServerOptions options = new HttpServerOptions();
-                    options.setTcpFastOpen(true)
-                            .setTcpQuickAck(true)
-                            .setTcpNoDelay(true);
-                    HttpServer httpServer = localVertx.createHttpServer(options).requestHandler(router);
-                    if(httpConfig.containsKey("SSL"))
-                        httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
-                    httpServer.listen(httpConfig.getInteger("port", 8080))
-                            .onSuccess(server -> logger.info(("Server started at port [" + server.actualPort() + "]. ")))
-                            .onFailure(failed -> logger.info(failed.getMessage()));
+                    Supplier<Verticle> httpServer = HttpServerVerticle::new;
+                    deployHttpService(httpServer, httpConfig.getInteger("instance", 0), httpConfig.getInteger("port", 8080));
                 }
             }
         }
     }
+
     private VertxOptions enableMonitoringOption(VertxOptions vertxOptions) {
         JsonObject metricsConfig = config.getJsonObject("metrics");
         if(metricsConfig!=null && metricsConfig.getBoolean("enabled")){
@@ -107,22 +112,11 @@ public class BoostApplication extends AbstractVerticle {
                     .setEnabled(true);
             if(metricsConfig.getString("tool").equals("prometheus")){
                 metricsOptions.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true));
-                router.route("/metrics").handler(PrometheusScrapingHandler.create());
+                isMonitorable = true;
             }
             vertxOptions.setMetricsOptions(metricsOptions);
         }
         return vertxOptions;
-    }
-    private void deploy(boolean isClustered) {
-        if (config != null) {
-            Booster booster = new Booster(localVertx, router, config);
-            try {
-                booster.boost(this.getClass().getPackage().getName());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else
-            logger.info("Deployment config not found.");
     }
 
     public ConfigRetrieverOptions initRetrieverConfig(String folderPath) {
@@ -133,7 +127,31 @@ public class BoostApplication extends AbstractVerticle {
                         .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
                 .addStore(new ConfigStoreOptions().setType("sys"));
     }
-
+    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) throws Exception {
+        vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
+                .setConfig(config)
+                .setWorkerPoolName(workerName)
+                .setWorkerPoolSize(workerConfig.getInteger("poolSize", 20))
+                .setInstances(workerConfig.getInteger("instance", 5))
+                .setThreadingModel(ThreadingModel.WORKER), res -> {
+            if (res.succeeded())
+                logger.info(workerName+" successfully deployed.");
+            else
+                logger.error(workerName+" deployment failed." + res.cause());
+        });
+    }
+    private void deployHttpService( Supplier<Verticle> serviceSupplier, int instances, int port) {
+        logger.info("Initializing Application Server...");
+        vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
+                .setConfig(config)
+                .setInstances(instances)
+                .setThreadingModel(ThreadingModel.EVENT_LOOP), res -> {
+            if (res.succeeded())
+                logger.info("HTTP service instance successfully deployed at port ["+port+"]");
+            else
+                logger.error("HTTP service instance deployment failed." + res.cause());
+        });
+    }
     @Override
     public Vertx getVertx() {
         return localVertx;
@@ -171,7 +189,15 @@ public class BoostApplication extends AbstractVerticle {
         run(clazz, args);
     }
 
-    public Router getRouter() {
-        return router;
+    public boolean isHasConfig() {
+        return hasConfig;
+    }
+
+    public boolean isMonitorable() {
+        return isMonitorable;
+    }
+
+    public Booster getBooster() {
+        return booster;
     }
 }
