@@ -99,7 +99,7 @@ public class BoostApplication extends AbstractVerticle {
                 JsonObject httpConfig = serverConfig.getJsonObject("http");
                 if(httpConfig.getBoolean("enable", true)) {
                     Supplier<Verticle> httpServer = HttpServerVerticle::new;
-                    deployHttpService(httpServer, httpConfig.getInteger("instance", 0), httpConfig.getInteger("port", 8080));
+                    deployHttpService(httpServer, httpConfig.getInteger("instance", 1), httpConfig.getInteger("port", 8080));
                 }
             }
         }
