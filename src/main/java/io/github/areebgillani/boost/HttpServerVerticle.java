@@ -35,6 +35,7 @@ public class HttpServerVerticle extends AbstractVerticle {
             config = BoostApplication.getInstance().getConfig();
         router = Router.router(vertx);
         booster = BoostApplication.getInstance().getBooster();
+        initDefaultRoutingConfig();
         registerRoutes();
         startHttpServer();
         if (BoostApplication.printRoutes) {
@@ -48,7 +49,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     public void startHttpServer(){
         JsonObject httpConfig = config.getJsonObject("server").getJsonObject("http");
-        initDefaultRoutingConfig();
         HttpServer httpServer = vertx.createHttpServer(getHttpOptions()).requestHandler(router);
         if(httpConfig.containsKey("SSL"))
             httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
