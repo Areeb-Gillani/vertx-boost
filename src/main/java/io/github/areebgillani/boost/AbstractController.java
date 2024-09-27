@@ -11,6 +11,6 @@ public class AbstractController extends AbstractVerticle {
     public EventBus eventBus;
     @Override
     public void start() {
-        eventBus = Vertx.currentContext().owner().eventBus();
+        eventBus = BoostApplication.getInstance().getVertx().eventBus();
     }
 }

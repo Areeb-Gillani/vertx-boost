@@ -54,8 +54,8 @@ public class HttpServerVerticle extends AbstractVerticle {
             httpServer.updateSSLOptions(new SSLOptions(httpConfig.getJsonObject("SSL")));
         httpServer.listen(httpConfig.getInteger("port", 8080))
                 .onSuccess(server -> {
-                    if (httpConfig.getInteger("instance",1)==1) {
-                        logger.info(("Server started at port [" + server.actualPort() + "]. "));
+                    if (httpConfig.getInteger("instance",1) > 1) {
+                        logger.info(("Shared Server instance started at port [" + server.actualPort() + "]. "));
                     }
                 })
                 .onFailure(failed -> logger.info("Server starting failure: "+failed.getMessage()));

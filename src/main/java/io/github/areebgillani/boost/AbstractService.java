@@ -12,7 +12,7 @@ public abstract class AbstractService extends AbstractVerticle {
     public EventBus clusteredEventBus;
     @Override
     public void start() {
-        eventBus = Vertx.currentContext().owner().eventBus();
+        eventBus = BoostApplication.getInstance().getVertx().eventBus();
         if(BoostApplication.getInstance().getClusteredVertx()!=null)
             clusteredEventBus = BoostApplication.getInstance().getClusteredVertx().eventBus();
         bindTopics();
