@@ -17,6 +17,7 @@ import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.micrometer.PrometheusScrapingHandler;
 
 import java.lang.reflect.Method;
@@ -62,6 +63,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
 
     private void initDefaultRoutingConfig() {
+        router.route().handler(CorsHandler.create());
         if(BoostApplication.getInstance().isMonitorable())
             router.route("/metrics").handler(PrometheusScrapingHandler.create());
         router.route().handler(BodyHandler.create());
