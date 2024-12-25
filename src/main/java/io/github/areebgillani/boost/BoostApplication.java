@@ -127,13 +127,17 @@ public class BoostApplication extends AbstractVerticle {
                         .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
                 .addStore(new ConfigStoreOptions().setType("sys"));
     }
-    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) throws Exception {
+    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) {
         vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
                 .setConfig(config)
                 .setWorkerPoolName(workerName)
                 .setWorkerPoolSize(workerConfig.getInteger("poolSize", 20))
                 .setInstances(workerConfig.getInteger("instance", 5))
-                .setThreadingModel(ThreadingModel.WORKER), res -> {
+                .setThreadingModel(switch (workerConfig.getString("type", "W")) {
+                    case "EL": yield ThreadingModel.EVENT_LOOP;
+                    case "VT": yield ThreadingModel.VIRTUAL_THREAD;
+                    default: yield ThreadingModel.WORKER;
+                }), res -> {
             if (res.succeeded())
                 logger.info(workerName+" successfully deployed.");
             else

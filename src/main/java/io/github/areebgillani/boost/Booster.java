@@ -64,7 +64,7 @@ public class Booster {
         }
     }
 
-    private void scanServices() throws Exception {
+    private void scanServices() {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
         Set<Class<?>> repos = reflections.getTypesAnnotatedWith(Repository.class);
