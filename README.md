@@ -33,7 +33,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:1.0.1")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:1.0.2")
 }
 ```
 #### pom.xml
@@ -43,7 +43,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>1.0.1</version>
+	    <version>1.0.2</version>
 	</dependency>
 </dependencies>
 ```
@@ -53,7 +53,7 @@ Vertx says that every class that extends AbstractVerticle will be handled by its
 ```json
 {
    {...},
-   "workers":{
+   "ServiceUnits":{
       "ExampleWorker":{
          "instance":5,
          "poolSize":6

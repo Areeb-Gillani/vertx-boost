@@ -2,9 +2,8 @@ package io.github.areebgillani.boost;
 
 import io.github.areebgillani.boost.aspects.*;
 import io.github.areebgillani.boost.pojos.EndPointController;
-import io.github.areebgillani.boost.pojos.ServiceWorker;
+import io.github.areebgillani.boost.pojos.ServiceUnit;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.ThreadingModel;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.logging.Logger;
@@ -26,7 +25,7 @@ public class Booster {
     Logger logger = LoggerFactory.getLogger(Booster.class);
     private final HashMap<String, Object> controllerInstanceMap = new HashMap<>();
     private final HashMap<String, List<EndPointController>> endPointControllerMap = new HashMap<>();
-    private final List<ServiceWorker> serviceWorkerList = new ArrayList<>();
+    private final List<ServiceUnit> serviceUnitList = new ArrayList<>();
     String basePackage;
     Vertx vertx;
     JsonObject config;
@@ -68,7 +67,7 @@ public class Booster {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> services = reflections.getTypesAnnotatedWith(Service.class);
         Set<Class<?>> repos = reflections.getTypesAnnotatedWith(Repository.class);
-        JsonObject workers = config.getJsonObject("workers");
+        JsonObject serviceUnits = config.getJsonObject("ServiceUnits");
         for (Class<?> service : services) {
             Supplier<Verticle> myService = () -> {
                 try {
@@ -84,8 +83,8 @@ public class Booster {
                     throw new RuntimeException(e);
                 }
             };
-            String workerName = getWorkerName(service);
-            serviceWorkerList.add(new ServiceWorker(config, myService, workerName, workers.getJsonObject(workerName)));
+            String serviceUnitName = getServiceUnitName(service);
+            serviceUnitList.add(new ServiceUnit(config, myService, serviceUnitName, serviceUnits.getJsonObject(serviceUnitName)));
         }
     }
 
@@ -114,7 +113,7 @@ public class Booster {
         }
     }
 
-    private String getWorkerName(Class<?> service) {
+    private String getServiceUnitName(Class<?> service) {
         for (Annotation annotation : service.getAnnotations()) {
             if (annotation instanceof Service serv)
                 return serv.value();
@@ -130,7 +129,7 @@ public class Booster {
         return controllerInstanceMap;
     }
 
-    public List<ServiceWorker> getServiceWorkerList() {
-        return serviceWorkerList;
+    public List<ServiceUnit> getServiceUnitList() {
+        return serviceUnitList;
     }
 }

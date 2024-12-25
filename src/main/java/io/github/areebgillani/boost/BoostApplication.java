@@ -81,9 +81,9 @@ public class BoostApplication extends AbstractVerticle {
         booster.boost(this.getClass().getPackage().getName());
         if(isClustered)
             clusteredVertx = VertxClusterUtils.initClusterVertx(config, vertxOptions);
-        booster.getServiceWorkerList().forEach(service->{
+        booster.getServiceUnitList().forEach(service->{
             try {
-                deployServices(service.getGlobalConfig(), service.getServiceSupplier(), service.getWorkerName(), service.getWorkerConfig());
+                deployServices(service.getGlobalConfig(), service.getServiceSupplier(), service.getServiceUnitName(), service.getServiceUnitConfig());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -127,21 +127,21 @@ public class BoostApplication extends AbstractVerticle {
                         .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
                 .addStore(new ConfigStoreOptions().setType("sys"));
     }
-    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) {
+    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String serviceUnitName, JsonObject serviceUnitConfig) {
         vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
                 .setConfig(config)
-                .setWorkerPoolName(workerName)
-                .setWorkerPoolSize(workerConfig.getInteger("poolSize", 20))
-                .setInstances(workerConfig.getInteger("instance", 5))
-                .setThreadingModel(switch (workerConfig.getString("type", "W")) {
+                .setWorkerPoolName(serviceUnitName)
+                .setWorkerPoolSize(serviceUnitConfig.getInteger("poolSize", 20))
+                .setInstances(serviceUnitConfig.getInteger("instance", 5))
+                .setThreadingModel(switch (serviceUnitConfig.getString("type", "W")) {
                     case "EL": yield ThreadingModel.EVENT_LOOP;
                     case "VT": yield ThreadingModel.VIRTUAL_THREAD;
                     default: yield ThreadingModel.WORKER;
                 }), res -> {
             if (res.succeeded())
-                logger.info(workerName+" successfully deployed.");
+                logger.info(serviceUnitName+" successfully deployed.");
             else
-                logger.error(workerName+" deployment failed." + res.cause());
+                logger.error(serviceUnitName+" deployment failed." + res.cause());
         });
     }
     private void deployHttpService( Supplier<Verticle> serviceSupplier, int instances, int port) {

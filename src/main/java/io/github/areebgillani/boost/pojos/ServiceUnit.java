@@ -5,17 +5,17 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.function.Supplier;
 
-public class ServiceWorker {
+public class ServiceUnit {
     JsonObject globalConfig;
     Supplier<Verticle> serviceSupplier;
-    String workerName;
-    JsonObject workerConfig;
+    String serviceUnitName;
+    JsonObject serviceUnitConfig;
 
-    public ServiceWorker(JsonObject globalConfig, Supplier<Verticle> serviceSupplier, String workerName, JsonObject workerConfig) {
+    public ServiceUnit(JsonObject globalConfig, Supplier<Verticle> serviceSupplier, String serviceUnitName, JsonObject serviceUnitConfig) {
         this.globalConfig = globalConfig;
         this.serviceSupplier = serviceSupplier;
-        this.workerName = workerName;
-        this.workerConfig = workerConfig;
+        this.serviceUnitName = serviceUnitName;
+        this.serviceUnitConfig = serviceUnitConfig;
     }
 
     public JsonObject getGlobalConfig() {
@@ -34,19 +34,19 @@ public class ServiceWorker {
         this.serviceSupplier = serviceSupplier;
     }
 
-    public String getWorkerName() {
-        return workerName;
+    public String getServiceUnitName() {
+        return serviceUnitName;
     }
 
-    public void setWorkerName(String workerName) {
-        this.workerName = workerName;
+    public void setServiceUnitName(String serviceUnitName) {
+        this.serviceUnitName = serviceUnitName;
     }
 
-    public JsonObject getWorkerConfig() {
-        return workerConfig;
+    public JsonObject getServiceUnitConfig() {
+        return serviceUnitConfig;
     }
 
-    public void setWorkerConfig(JsonObject workerConfig) {
-        this.workerConfig = workerConfig;
+    public void setServiceUnitConfig(JsonObject serviceUnitConfig) {
+        this.serviceUnitConfig = serviceUnitConfig;
     }
 }
