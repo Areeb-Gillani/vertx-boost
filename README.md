@@ -56,7 +56,8 @@ Vertx says that every class that extends AbstractVerticle will be handled by its
    "ServiceUnits":{
       "ExampleWorker":{
          "instance":5,
-         "poolSize":6
+         "poolSize":6,
+	 "type": "W"
       }
    },
    {...}
