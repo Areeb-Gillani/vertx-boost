@@ -48,7 +48,13 @@ dependencies {
 </dependencies>
 ```
 # Configuration
-Vertx says that every class that extends AbstractVerticle will be handled by its own dedicated threads and thread pools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea, then please visit https://vertx.io first. A service is basically a worker verticle; you can configure it using the following JSON:
+Vertx says that every class that extends AbstractVerticle will be handled by its own dedicated threads and thread pools and will have its own life cycle. I am assuming that you have the basic idea of MainVerticle and WorkerVerticle. If you don't have the idea, then please read [Verticle Types](https://vertx.io/docs/vertx-core/java/#_verticle_types) first. A service is basically a runnable unit (or a verticle in terms of vertx) which run on its own thread pool. The instance field represents the number of instances this unit will have on the start up whereas the poolSize is the maximum number of instance it can create under load. Whereas, there are three types of thread pools available in the scope of vertx i.e.
+1. Eventloop Thread
+2. Worker Thread
+3. Virtual Thread
+
+Please use the above link in case you want to attain more knowledge about their difference. As a rule of thump if your function is going to take more than 100ms in execution use of EventLoop thread is strictly prohibited as it will explode under load. The default threading type is worker and it will worker even if you don't have the "type" attribute configured.
+Here is the sample JSON:
 ### Config.json
 ```json
 {
