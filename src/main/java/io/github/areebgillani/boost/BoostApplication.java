@@ -67,11 +67,104 @@ public class BoostApplication extends AbstractVerticle {
                 logger.error("Error in config loading!");
             } else {
                 config = ar.result();
+                // Apply overrides from environment variables and system properties with hierarchical mapping
+                applyConfigurationOverrides();
                 latch.countDown();
                 logger.info("Config loaded successfully!");
             }
         });
         latch.await();
+    }
+
+    /**
+     * Apply configuration overrides from environment variables and system properties.
+     * Precedence: System Properties (command line -D) > Environment Variables > Config File
+     * Supports hierarchical property notation: -Da.b.c=xyz -> {"a":{"b":{"c":"xyz"}}}
+     */
+    private void applyConfigurationOverrides() {
+        // First, apply environment variable overrides
+        System.getenv().forEach((key, value) -> {
+            if (key.contains(".")) {
+                // Convert dot notation to hierarchical structure
+                mergeHierarchicalProperty(config, key, value, "Environment Variable");
+            }
+        });
+
+        // Then, apply system property overrides (highest priority)
+        System.getProperties().forEach((key, value) -> {
+            String propKey = key.toString();
+            String propValue = value.toString();
+            if (propKey.contains(".")) {
+                // Convert dot notation to hierarchical structure
+                mergeHierarchicalProperty(config, propKey, propValue, "System Property");
+            }
+        });
+    }
+
+    /**
+     * Merge a dot-notation property into the config JsonObject hierarchically.
+     * Example: "a.b.c" with value "xyz" creates/updates {"a":{"b":{"c":"xyz"}}}
+     *
+     * @param config The base configuration object to merge into
+     * @param propertyPath The dot-notation property path (e.g., "a.b.c")
+     * @param value The value to set
+     * @param source The source of the override (for logging)
+     */
+    private void mergeHierarchicalProperty(JsonObject config, String propertyPath, String value, String source) {
+        String[] parts = propertyPath.split("\\.");
+        JsonObject current = config;
+
+        // Navigate/create the hierarchy up to the parent of the final property
+        for (int i = 0; i < parts.length - 1; i++) {
+            String part = parts[i];
+            if (!current.containsKey(part)) {
+                current.put(part, new JsonObject());
+            } else if (!(current.getValue(part) instanceof JsonObject)) {
+                // If the existing value is not a JsonObject, replace it with one
+                logger.warn("Overriding non-object value at '" + part + "' to support nested property from " + source);
+                current.put(part, new JsonObject());
+            }
+            current = current.getJsonObject(part);
+        }
+
+        // Set the final value, attempting to parse it as the appropriate type
+        String finalKey = parts[parts.length - 1];
+        Object parsedValue = parseValue(value);
+        current.put(finalKey, parsedValue);
+        logger.info("Config override applied from " + source + ": " + propertyPath + " = " + value);
+    }
+
+    /**
+     * Parse a string value to its appropriate type (boolean, number, or string).
+     *
+     * @param value The string value to parse
+     * @return The parsed value as Boolean, Integer, Double, or String
+     */
+    private Object parseValue(String value) {
+        // Try boolean
+        if ("true".equalsIgnoreCase(value)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return false;
+        }
+
+        // Try integer
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            // Not an integer, continue
+        }
+
+        // Try double
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            // Not a double, continue
+        }
+
+        // Default to string
+        return value;
     }
 
     public void deployApplication(String folderPath, Boolean isClustered) throws Exception {
@@ -120,12 +213,17 @@ public class BoostApplication extends AbstractVerticle {
     }
 
     public ConfigRetrieverOptions initRetrieverConfig(String folderPath) {
+        // Add stores in order of precedence (first = lowest priority, last = highest priority)
+        // Order: File -> Environment Variables -> System Properties (command line)
         return new ConfigRetrieverOptions()
                 .addStore(new ConfigStoreOptions()
                         .setType("file")
                         .setOptional(true)
                         .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
-                .addStore(new ConfigStoreOptions().setType("sys"));
+                .addStore(new ConfigStoreOptions()
+                        .setType("env"))
+                .addStore(new ConfigStoreOptions()
+                        .setType("sys"));
     }
     private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String serviceUnitName, JsonObject serviceUnitConfig) {
         vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
