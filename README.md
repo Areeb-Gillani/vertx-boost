@@ -206,7 +206,7 @@ allprojects {
 #### build.gradle
 ```kotlin
 dependencies {
-  implementation ("com.github.Areeb-Gillani:vertx-boost:1.0.2")
+  implementation ("com.github.Areeb-Gillani:vertx-boost:1.1.1")
 }
 ```
 #### pom.xml
@@ -216,7 +216,7 @@ dependencies {
 	<dependency>
 	    <groupId>com.github.Areeb-Gillani</groupId>
 	    <artifactId>vertx-boost</artifactId>
-	    <version>1.0.2</version>
+	    <version>1.1.1</version>
 	</dependency>
 </dependencies>
 ```
