@@ -20,13 +20,10 @@ public class ResponseHandler {
             return; // Response already sent (e.g., by async handler)
         }
 
-        if (returnType.getName().equals("void")) {
-            // For void methods, check if response was already handled
-            if (!context.response().headWritten()) {
-                context.response()
-                        .setStatusCode(204)
-                        .end();
-            }
+        if (returnType == Void.TYPE) {
+            // For void methods, the controller is responsible for writing the response
+            // (typically via RoutingContext in an async callback like EventBus reply).
+            // Do NOT send any response here - let the controller handle it.
             return;
         }
 
