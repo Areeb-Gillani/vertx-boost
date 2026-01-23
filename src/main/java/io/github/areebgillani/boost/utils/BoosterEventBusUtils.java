@@ -24,12 +24,15 @@ public class BoosterEventBusUtils {
     }
 
     private static void addDefaultCodecs(Set<Class<?>> typeList) {
+        // Use concrete types only - interfaces like List.class and Set.class don't work with codecs
         typeList.add(LinkedList.class);
         typeList.add(HashMap.class);
-        typeList.add(Set.class);
         typeList.add(HashSet.class);
         typeList.add(ArrayList.class);
         typeList.add(Hashtable.class);
-        typeList.add(List.class);
+        typeList.add(LinkedHashSet.class);
+        typeList.add(LinkedHashMap.class);
+        typeList.add(TreeSet.class);
+        typeList.add(TreeMap.class);
     }
 }

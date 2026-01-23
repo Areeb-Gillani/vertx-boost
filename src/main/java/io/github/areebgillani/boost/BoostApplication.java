@@ -325,7 +325,7 @@ public class BoostApplication extends AbstractVerticle {
             default -> ThreadingModel.WORKER;
         };
 
-        vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
+        localVertx.deployVerticle(serviceSupplier, new DeploymentOptions()
                         .setConfig(config)
                         .setWorkerPoolName(serviceUnitName)
                         .setWorkerPoolSize(poolSize)
@@ -337,7 +337,7 @@ public class BoostApplication extends AbstractVerticle {
 
     private void deployHttpService(Supplier<Verticle> serviceSupplier, int instances, int port) {
         logger.info("Initializing HTTP Server on port " + port + " with " + instances + " instance(s)...");
-        vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
+        localVertx.deployVerticle(serviceSupplier, new DeploymentOptions()
                         .setConfig(config)
                         .setInstances(instances)
                         .setThreadingModel(ThreadingModel.EVENT_LOOP))

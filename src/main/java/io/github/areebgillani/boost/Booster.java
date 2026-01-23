@@ -163,33 +163,39 @@ public class Booster {
 
     /**
      * Injects dependencies into a service instance.
+     * Walks the class hierarchy to inject @Autowired fields from parent classes.
      */
     private void injectDependencies(Object serviceInstance, Set<Class<?>> repos)
             throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
 
-        for (Field field : serviceInstance.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(Autowired.class)) {
-                field.setAccessible(true);
-                Class<?> fieldType = Class.forName(field.getType().getName());
+        // Walk the class hierarchy to include inherited fields
+        Class<?> currentClass = serviceInstance.getClass();
+        while (currentClass != null && currentClass != Object.class) {
+            for (Field field : currentClass.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Autowired.class)) {
+                    field.setAccessible(true);
+                    Class<?> fieldType = Class.forName(field.getType().getName());
 
-                if (repos.contains(fieldType)) {
-                    // It's a repository - inject with config
-                    String connectionName = getRepositoryConnectionName(fieldType);
-                    Object repoInstance = fieldType.getConstructor(String.class, JsonObject.class)
-                            .newInstance(connectionName, config);
-                    field.set(serviceInstance, repoInstance);
-                    logger.info("Injected repository: " + fieldType.getSimpleName() + " with connection: " + connectionName);
-                } else {
-                    // Regular class - try no-args constructor
-                    try {
-                        Object instance = fieldType.getConstructor().newInstance();
-                        field.set(serviceInstance, instance);
-                        logger.info("Injected dependency: " + fieldType.getSimpleName());
-                    } catch (NoSuchMethodException e) {
-                        logger.warn("Cannot inject " + fieldType.getName() + ": no default constructor");
+                    if (repos.contains(fieldType)) {
+                        // It's a repository - inject with config
+                        String connectionName = getRepositoryConnectionName(fieldType);
+                        Object repoInstance = fieldType.getConstructor(String.class, JsonObject.class)
+                                .newInstance(connectionName, config);
+                        field.set(serviceInstance, repoInstance);
+                        logger.info("Injected repository: " + fieldType.getSimpleName() + " with connection: " + connectionName);
+                    } else {
+                        // Regular class - try no-args constructor
+                        try {
+                            Object instance = fieldType.getConstructor().newInstance();
+                            field.set(serviceInstance, instance);
+                            logger.info("Injected dependency: " + fieldType.getSimpleName());
+                        } catch (NoSuchMethodException e) {
+                            logger.warn("Cannot inject " + fieldType.getName() + ": no default constructor");
+                        }
                     }
                 }
             }
+            currentClass = currentClass.getSuperclass();
         }
     }
 

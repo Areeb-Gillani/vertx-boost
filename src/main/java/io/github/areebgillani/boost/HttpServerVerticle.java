@@ -41,7 +41,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     @Override
     public void start() {
-        vertx = BoostApplication.getInstance().getVertx();
         if (BoostApplication.getInstance().isHasConfig()) {
             config = BoostApplication.getInstance().getConfig();
         }
@@ -184,8 +183,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         }
 
         Object[] params = new Object[paramCount];
-        // Use declaring class name + method name for unique cache key
-        String cacheKey = method.getDeclaringClass().getName() + "#" + method.getName();
+        // Use declaring class name + method name + parameter types for unique cache key (handles overloading)
+        String cacheKey = method.getDeclaringClass().getName() + "#" + method.getName() + java.util.Arrays.toString(method.getParameterTypes());
         MethodRecord methodRecord = methodBluePrint.computeIfAbsent(cacheKey,
                 k -> new MethodRecord(method.getParameters(), method.getParameterAnnotations()));
 
