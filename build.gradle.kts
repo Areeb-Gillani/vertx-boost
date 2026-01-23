@@ -4,8 +4,14 @@ plugins {
 }
 
 group = "io.github.areebgillani"
-version = "1.0.2"
+version = "1.1.0"
 val vertxVersion = "4.5.8"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -34,5 +40,4 @@ dependencies {
     implementation("io.vertx:vertx-hazelcast:$vertxVersion")
     implementation("io.vertx:vertx-micrometer-metrics:$vertxVersion")
     implementation("io.micrometer:micrometer-registry-prometheus:1.11.5")
-
 }

@@ -1,6 +1,7 @@
 package io.github.areebgillani.boost;
 
 import io.github.areebgillani.boost.pojos.EndPointController;
+import io.github.areebgillani.boost.pojos.ServiceUnit;
 import io.github.areebgillani.boost.utils.VertxClusterUtils;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
@@ -15,65 +16,114 @@ import io.vertx.micrometer.VertxPrometheusOptions;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+/**
+ * Main application class for Boost framework.
+ * Extend this class and call run() to start your application.
+ */
 public class BoostApplication extends AbstractVerticle {
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private Vertx localVertx;
     private Vertx clusteredVertx;
     private JsonObject config;
-    protected static BoostApplication instance;
-    private static boolean isClusteredMode = false;
-    private static String configPath = "config.json";
-    private boolean hasConfig = false;
-    private boolean isMonitorable = false;
+    protected static volatile BoostApplication instance;
+    private static volatile boolean isClusteredMode = false;
+    private static volatile String configPath = "config.json";
+    private final AtomicBoolean hasConfig = new AtomicBoolean(false);
+    private final AtomicBoolean isMonitorable = new AtomicBoolean(false);
     private HashMap<String, List<EndPointController>> controllers;
     private Booster booster;
+    private final Promise<BoostApplication> promise = Promise.promise();
+    public static volatile boolean printRoutes = true;
+
     public static BoostApplication getInstance() {
         return instance;
     }
-    private final Promise<BoostApplication> promise = Promise.promise();
-    public static boolean printRoutes=true;
 
     @Override
     public void start() throws Exception {
         super.start();
         localVertx = Vertx.vertx();
         instance = this;
-        localVertx.executeBlocking(()->{
-            deployApplication(configPath, isClusteredMode);
-            return promise;
+        localVertx.executeBlocking(() -> {
+            try {
+                deployApplication(configPath, isClusteredMode);
+            } catch (Exception e) {
+                logger.error("Failed to deploy application", e);
+                promise.fail(e);
+            }
+            return promise.future();
         });
     }
 
-    public void init(Vertx vertx, String configPath) throws InterruptedException {
+    public void init(Vertx vertx, String configPath) {
         this.localVertx = vertx;
-        loadConfig(configPath);
-        booster = new Booster(localVertx, config);
-        hasConfig = true;
+        loadConfig(configPath)
+                .onSuccess(cfg -> {
+                    this.config = cfg;
+                    this.booster = new Booster(localVertx, config);
+                    hasConfig.set(true);
+                    logger.info("Configuration loaded successfully");
+                })
+                .onFailure(err -> logger.error("Failed to load configuration", err));
     }
 
     public void init(Vertx vertx, JsonObject config) {
         this.localVertx = vertx;
         this.config = config;
+        this.booster = new Booster(localVertx, config);
+        hasConfig.set(true);
     }
 
-    private void loadConfig(String folderPath) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        ConfigRetriever.create(localVertx, initRetrieverConfig(folderPath)).getConfig().onComplete(ar -> {
-            if (ar.failed()) {
-                latch.countDown();
-                logger.error("Error in config loading!");
-            } else {
-                config = ar.result();
-                // Apply overrides from environment variables and system properties with hierarchical mapping
-                applyConfigurationOverrides();
-                latch.countDown();
-                logger.info("Config loaded successfully!");
-            }
-        });
-        latch.await();
+    /**
+     * Loads configuration asynchronously using Vert.x config retriever.
+     */
+    private Future<JsonObject> loadConfig(String folderPath) {
+        Promise<JsonObject> configPromise = Promise.promise();
+        ConfigRetriever.create(localVertx, initRetrieverConfig(folderPath))
+                .getConfig()
+                .onSuccess(cfg -> {
+                    this.config = cfg;
+                    hasConfig.set(true);
+                    configPromise.complete(cfg);
+                })
+                .onFailure(err -> {
+                    logger.error("Error loading config: " + err.getMessage(), err);
+                    // Use empty config as fallback
+                    this.config = new JsonObject();
+                    configPromise.fail(err);
+                });
+        return configPromise.future();
+    }
+
+    /**
+     * Loads configuration synchronously (blocking) - use with caution.
+     */
+    private void loadConfigSync(String folderPath) {
+        try {
+            JsonObject cfg = ConfigRetriever.create(localVertx, initRetrieverConfig(folderPath))
+                    .getConfig()
+                    .toCompletionStage()
+                    .toCompletableFuture()
+                    .get();
+            this.config = cfg;
+            hasConfig.set(true);
+            logger.info("Config loaded successfully!");
+        } catch (Exception e) {
+            logger.error("Error loading config", e);
+            this.config = new JsonObject();
+        }
+    }
+
+    /**
+     * Deploy the application with the specified config file.
+     * Uses non-clustered mode by default.
+     * @param folderPath Path to the configuration file
+     */
+    public void deployApplication(String folderPath) throws Exception {
+        deployApplication(folderPath, false);
     }
 
     /**
@@ -168,44 +218,85 @@ public class BoostApplication extends AbstractVerticle {
     }
 
     public void deployApplication(String folderPath, Boolean isClustered) throws Exception {
-        init(localVertx, folderPath);
+        loadConfigSync(folderPath);
+        
+        if (config == null) {
+            config = new JsonObject();
+            logger.warn("No configuration loaded, using defaults");
+        }
+
         VertxOptions vertxOptions = enableMonitoringOption(getVertxOptions());
         localVertx = Vertx.vertx(vertxOptions);
+        booster = new Booster(localVertx, config);
         booster.boost(this.getClass().getPackage().getName());
-        if(isClustered)
-            clusteredVertx = VertxClusterUtils.initClusterVertx(config, vertxOptions);
-        booster.getServiceUnitList().forEach(service->{
+
+        if (isClustered) {
             try {
-                deployServices(service.getGlobalConfig(), service.getServiceSupplier(), service.getServiceUnitName(), service.getServiceUnitConfig());
+                clusteredVertx = VertxClusterUtils.initClusterVertx(config, vertxOptions);
+                if (clusteredVertx == null) {
+                    logger.warn("Failed to initialize clustered Vert.x - running in standalone mode");
+                }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                logger.error("Cluster initialization failed", e);
             }
-        });
+        }
+
+        deployServices();
         deployHTTPServer();
         promise.complete(this);
     }
 
-    private void deployHTTPServer() {
-        if (config.containsKey("server")) {
-            JsonObject serverConfig = config.getJsonObject("server");
-            if (serverConfig.containsKey("http")) {
-                JsonObject httpConfig = serverConfig.getJsonObject("http");
-                if(httpConfig.getBoolean("enable", true)) {
-                    Supplier<Verticle> httpServer = HttpServerVerticle::new;
-                    deployHttpService(httpServer, httpConfig.getInteger("instance", 1), httpConfig.getInteger("port", 8080));
-                }
+    /**
+     * Deploys all registered services.
+     */
+    private void deployServices() {
+        for (ServiceUnit service : booster.getServiceUnitList()) {
+            JsonObject serviceConfig = service.getServiceUnitConfig();
+            if (serviceConfig == null) {
+                serviceConfig = new JsonObject()
+                        .put("instance", 1)
+                        .put("poolSize", 20)
+                        .put("type", "W");
             }
+            deployService(service.getGlobalConfig(), service.getServiceSupplier(),
+                    service.getServiceUnitName(), serviceConfig);
         }
+    }
+
+    private void deployHTTPServer() {
+        JsonObject serverConfig = config.getJsonObject("server");
+        if (serverConfig == null) {
+            logger.info("No 'server' configuration found - HTTP server not started");
+            return;
+        }
+
+        JsonObject httpConfig = serverConfig.getJsonObject("http");
+        if (httpConfig == null) {
+            logger.info("No 'server.http' configuration found - HTTP server not started");
+            return;
+        }
+
+        if (!httpConfig.getBoolean("enable", true)) {
+            logger.info("HTTP server disabled in configuration");
+            return;
+        }
+
+        Supplier<Verticle> httpServer = HttpServerVerticle::new;
+        int instances = httpConfig.getInteger("instance", 1);
+        int port = httpConfig.getInteger("port", 8080);
+        deployHttpService(httpServer, instances, port);
     }
 
     private VertxOptions enableMonitoringOption(VertxOptions vertxOptions) {
         JsonObject metricsConfig = config.getJsonObject("metrics");
-        if(metricsConfig!=null && metricsConfig.getBoolean("enabled")){
+        if (metricsConfig != null && metricsConfig.getBoolean("enabled", false)) {
             MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
                     .setEnabled(true);
-            if(metricsConfig.getString("tool").equals("prometheus")){
+            String tool = metricsConfig.getString("tool", "");
+            if ("prometheus".equalsIgnoreCase(tool)) {
                 metricsOptions.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true));
-                isMonitorable = true;
+                isMonitorable.set(true);
+                logger.info("Prometheus metrics enabled");
             }
             vertxOptions.setMetricsOptions(metricsOptions);
         }
@@ -213,51 +304,52 @@ public class BoostApplication extends AbstractVerticle {
     }
 
     public ConfigRetrieverOptions initRetrieverConfig(String folderPath) {
-        // Add stores in order of precedence (first = lowest priority, last = highest priority)
-        // Order: File -> Environment Variables -> System Properties (command line)
+        String path = (folderPath == null || folderPath.isEmpty()) ? "config.json" : folderPath;
         return new ConfigRetrieverOptions()
                 .addStore(new ConfigStoreOptions()
                         .setType("file")
                         .setOptional(true)
-                        .setConfig(new JsonObject().put("path", folderPath == null || folderPath.isEmpty() ? "config.json" : folderPath)))
-                .addStore(new ConfigStoreOptions()
-                        .setType("env"))
-                .addStore(new ConfigStoreOptions()
-                        .setType("sys"));
+                        .setConfig(new JsonObject().put("path", path)))
+                .addStore(new ConfigStoreOptions().setType("sys"));
     }
-    private void deployServices(JsonObject config, Supplier<Verticle> serviceSupplier, String serviceUnitName, JsonObject serviceUnitConfig) {
+
+    private void deployService(JsonObject config, Supplier<Verticle> serviceSupplier,
+                               String serviceUnitName, JsonObject serviceUnitConfig) {
+        int poolSize = serviceUnitConfig.getInteger("poolSize", 20);
+        int instances = serviceUnitConfig.getInteger("instance", 1);
+        String type = serviceUnitConfig.getString("type", "W");
+
+        ThreadingModel threadingModel = switch (type.toUpperCase()) {
+            case "EL" -> ThreadingModel.EVENT_LOOP;
+            case "VT" -> ThreadingModel.VIRTUAL_THREAD;
+            default -> ThreadingModel.WORKER;
+        };
+
         vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
-                .setConfig(config)
-                .setWorkerPoolName(serviceUnitName)
-                .setWorkerPoolSize(serviceUnitConfig.getInteger("poolSize", 20))
-                .setInstances(serviceUnitConfig.getInteger("instance", 5))
-                .setThreadingModel(switch (serviceUnitConfig.getString("type", "W")) {
-                    case "EL": yield ThreadingModel.EVENT_LOOP;
-                    case "VT": yield ThreadingModel.VIRTUAL_THREAD;
-                    default: yield ThreadingModel.WORKER;
-                }), res -> {
-            if (res.succeeded())
-                logger.info(serviceUnitName+" successfully deployed.");
-            else
-                logger.error(serviceUnitName+" deployment failed." + res.cause());
-        });
+                        .setConfig(config)
+                        .setWorkerPoolName(serviceUnitName)
+                        .setWorkerPoolSize(poolSize)
+                        .setInstances(instances)
+                        .setThreadingModel(threadingModel))
+                .onSuccess(id -> logger.info(serviceUnitName + " successfully deployed (id: " + id + ")"))
+                .onFailure(err -> logger.error(serviceUnitName + " deployment failed: " + err.getMessage(), err));
     }
-    private void deployHttpService( Supplier<Verticle> serviceSupplier, int instances, int port) {
-        logger.info("Initializing Application Server...");
+
+    private void deployHttpService(Supplier<Verticle> serviceSupplier, int instances, int port) {
+        logger.info("Initializing HTTP Server on port " + port + " with " + instances + " instance(s)...");
         vertx.deployVerticle(serviceSupplier, new DeploymentOptions()
-                .setConfig(config)
-                .setInstances(instances)
-                .setThreadingModel(ThreadingModel.EVENT_LOOP), res -> {
-            if (res.succeeded())
-                logger.info("HTTP service instance successfully deployed at port ["+port+"]");
-            else
-                logger.error("HTTP service instance deployment failed." + res.cause());
-        });
+                        .setConfig(config)
+                        .setInstances(instances)
+                        .setThreadingModel(ThreadingModel.EVENT_LOOP))
+                .onSuccess(id -> logger.info("HTTP server deployed successfully at port [" + port + "]"))
+                .onFailure(err -> logger.error("HTTP server deployment failed: " + err.getMessage(), err));
     }
+
     @Override
     public Vertx getVertx() {
         return localVertx;
     }
+
     private VertxOptions getVertxOptions() {
         return new VertxOptions()
                 .setEventLoopPoolSize(config.getInteger("eventLoopPoolSize", 5))
@@ -272,31 +364,37 @@ public class BoostApplication extends AbstractVerticle {
     public JsonObject getConfig() {
         return config;
     }
+
     public static void run(Class<? extends BoostApplication> clazz, String[] args) {
-        LinkedHashSet<String> params = new LinkedHashSet<>(List.of(new String[]{"run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()}));
+        LinkedHashSet<String> params = new LinkedHashSet<>(List.of(
+                "run", clazz.getCanonicalName(), "--launcher-class=" + clazz.getCanonicalName()));
         params.addAll(List.of(args));
         new Launcher().dispatch(params.toArray(new String[0]));
     }
-    public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath, boolean isClusteredMode) {
+
+    public static void run(Class<? extends BoostApplication> clazz, String[] args,
+                           String configPath, boolean isClusteredMode) {
         BoostApplication.configPath = configPath;
         BoostApplication.isClusteredMode = isClusteredMode;
         run(clazz, args);
     }
+
     public static void run(Class<? extends BoostApplication> clazz, String[] args, String configPath) {
         BoostApplication.configPath = configPath;
         run(clazz, args);
     }
+
     public static void run(Class<? extends BoostApplication> clazz, String[] args, boolean isClusteredMode) {
         BoostApplication.isClusteredMode = isClusteredMode;
         run(clazz, args);
     }
 
     public boolean isHasConfig() {
-        return hasConfig;
+        return hasConfig.get();
     }
 
     public boolean isMonitorable() {
-        return isMonitorable;
+        return isMonitorable.get();
     }
 
     public Booster getBooster() {
